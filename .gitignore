@@ -1,0 +1,12 @@
+# Dependency folders
+node_modules/
+Backend/node_modules/
+
+# Environment files (contain secrets!)
+.env
+Backend/.env
+Frontend/.env
+
+# Operating System files
+.DS_Store
+Thumbs.db
