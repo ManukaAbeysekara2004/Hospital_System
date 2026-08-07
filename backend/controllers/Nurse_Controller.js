@@ -1,0 +1,209 @@
+const accountant = require('../models/Accountant');
+const admin = require('../models/Admin');
+const doctor = require('../models/Doctor');
+const laboratory_staff = require('../models/Laboratory_Staff');
+const nurse = require('../models/Nurse');
+const pharmacist = require('../models/Pharmacist');
+const receptionist = require('../models/Receptionist');
+const bcrypt = require('bcryptjs');
+
+// 01. Nurse Registration //
+//------------------------//
+
+exports.Nurse_Registration = async (req, res) => {
+    try {
+
+        const {
+            FullName,
+            DateOfBirth,
+            Gender,
+            NICNumber,
+            PhoneNumber,
+            Address,
+            NursingLicenseNumber,
+            Qualifications,
+            AssignedWard,
+            Designation,
+            EmployeeID,
+            Email,
+            Password
+        } = req.body;
+
+        // --- Check NIC Number --- //
+
+        const existingNIC = await nurse.findOne({ NICNumber });
+
+        if (existingNIC) {
+            return res.status(400).json({
+                message: "NIC Number already registered"
+            });
+        }
+
+        // --- Check Nursing License Number --- //
+
+        const existingLicense = await nurse.findOne({
+            NursingLicenseNumber
+        });
+
+        if (existingLicense) {
+            return res.status(400).json({
+                message: "Nursing License Number already exists"
+            });
+        }
+
+        // --- Check Employee ID --- //
+
+        const existingEmployeeID = await nurse.findOne({
+            EmployeeID
+        });
+
+        if (existingEmployeeID) {
+            return res.status(400).json({
+                message: "Employee ID already exists"
+            });
+        }
+
+        // --- Validate Phone Number --- //
+
+        if (!/^\d{10}$/.test(PhoneNumber)) {
+            return res.status(400).json({
+                message: "Phone Number must contain exactly 10 digits"
+            });
+        }
+
+        // --- Validate Email --- //
+
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+        if (!emailRegex.test(Email)) {
+            return res.status(400).json({
+                message: "Email must be a valid @gmail.com address"
+            });
+        }
+
+        // --- Check Email already exists --- //
+
+        const accountantEmail = await accountant.findOne({ Email });
+        const adminEmail = await admin.findOne({ Email });
+        const doctorEmail = await doctor.findOne({ Email });
+        const labEmail = await laboratory_staff.findOne({ Email });
+        const nurseEmail = await nurse.findOne({ Email });
+        const pharmacistEmail = await pharmacist.findOne({ Email });
+        const receptionistEmail = await receptionist.findOne({ Email });
+
+        if (
+            accountantEmail ||
+            adminEmail ||
+            doctorEmail ||
+            labEmail ||
+            nurseEmail ||
+            pharmacistEmail ||
+            receptionistEmail
+        ) {
+            return res.status(400).json({
+                message: "Email already registered"
+            });
+        }
+
+        // --- Validate Password --- //
+
+        if (Password.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Hash Password --- //
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(Password, salt);
+
+        // --- Save Nurse --- //
+
+        const newNurse = new nurse({
+            FullName,
+            DateOfBirth,
+            Gender,
+            NICNumber,
+            PhoneNumber,
+            Address,
+            NursingLicenseNumber,
+            Qualifications,
+            AssignedWard,
+            Designation,
+            EmployeeID,
+            Email,
+            Password: hashedPassword,
+
+            // System Fields
+            Role: "Nurse",
+            Approve: false,
+            InHospitalAvailability: false,
+            InWork: false
+        });
+
+        await newNurse.save();
+
+        res.status(201).json({
+            message: "Nurse registered successfully",
+            newNurse
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Server Error",
+            error: error.message
+        });
+
+    }
+};
+
+
+// 02. Nurse Login //
+//-----------------//
+
+exports.Nurse_Login = async (req, res) => {
+    try {
+        const { Email, Password } = req.body;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findOne({ Email });
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        // --- validate password --- //
+        const isMatch = await bcrypt.compare(Password, existingNurse.Password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        res.status(200).json({ message: "Login successful", existingNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 03. Get Nurse Approve Status //
+//------------------------------//
+
+exports.Get_Nurse_Approve_Status = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        res.status(200).json({ message: "Nurse approve status retrieved", approveStatus: existingNurse.Approve });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
