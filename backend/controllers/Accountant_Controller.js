@@ -5,6 +5,7 @@ const laboratory_staff = require('../models/Laboratory_Staff');
 const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
+const patient = require('../models/Patient');
 const bcrypt = require('bcryptjs');
 
 // 01. Accountant Registration //
@@ -191,3 +192,47 @@ exports.Get_Approve_Status = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+
+// 04. Get Accountant Details //
+//----------------------------//
+
+exports.Get_Accountant_Details = async (req, res) => {
+    try {
+        const { accountantId } = req.params;
+
+        // --- Check if Accountant exists --- //
+        const existingAccountant = await accountant.findById(accountantId);
+
+        if (!existingAccountant) {
+            return res.status(404).json({ message: "Accountant not found" });
+        }
+
+        res.status(200).json({ message: "Accountant details retrieved successfully", accountant: existingAccountant });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 05. Delete Accountant //
+//-----------------------//
+
+exports.Delete_Accountant = async (req, res) => {
+    try {
+        const { accountantId } = req.params;
+
+        // --- Check if Accountant exists --- //
+        const existingAccountant = await accountant.findById(accountantId);
+
+        if (!existingAccountant) {
+            return res.status(404).json({ message: "Accountant not found" });
+        }
+
+        await existingAccountant.deleteOne();
+
+        res.status(200).json({ message: "Accountant deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};  

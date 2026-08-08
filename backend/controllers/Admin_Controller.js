@@ -1,4 +1,3 @@
-const e = require('express');
 const accountant = require('../models/Accountant');
 const admin = require('../models/Admin');
 const doctor = require('../models/Doctor');
@@ -6,6 +5,7 @@ const laboratory_staff = require('../models/Laboratory_Staff');
 const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
+const patient = require('../models/Patient');
 const bcrypt = require('bcryptjs');
 
 // 01. Admin Registration //
@@ -185,6 +185,50 @@ exports.Get_Admin_Approve_Status = async (req, res) => {
         }
 
         res.status(200).json({ message: "Approve status retrieved", approve: existingAdmin.Approve });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 04. Get Admin Details //
+//-----------------------//
+
+exports.Get_Admin_Details = async (req, res) => {
+    try {
+        const { adminId } = req.params;
+
+        // --- Check if Admin exists --- //
+        const existingAdmin = await admin.findById(adminId);
+
+        if (!existingAdmin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        res.status(200).json({ message: "Admin details retrieved", adminDetails: existingAdmin });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 05. Delete Admin //
+//------------------//
+
+exports.Delete_Admin = async (req, res) => {
+    try {
+        const { adminId } = req.params;
+
+        // --- Check if Admin exists --- //
+        const existingAdmin = await admin.findById(adminId);
+
+        if (!existingAdmin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        await existingAdmin.deleteOne();
+
+        res.status(200).json({ message: "Admin deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }

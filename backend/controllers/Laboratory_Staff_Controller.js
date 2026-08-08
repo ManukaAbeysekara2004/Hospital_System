@@ -5,6 +5,7 @@ const laboratory_staff = require('../models/Laboratory_Staff');
 const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
+const patient = require('../models/Patient');
 const bcrypt = require('bcryptjs');
 
 // 01. Laboratory Staff Registration //
@@ -205,3 +206,47 @@ exports.Get_Laboratory_Staff_Approve_Status = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+
+// 04. Get Laboratory Staff Details //
+//----------------------------------//
+
+exports.Get_Laboratory_Staff_Details = async (req, res) => {
+    try {
+        const { laboratoryStaffId } = req.params;
+
+        // --- Check if Laboratory Staff exists --- //
+        const existingLaboratoryStaff = await laboratory_staff.findById(laboratoryStaffId);
+
+        if (!existingLaboratoryStaff) {
+            return res.status(404).json({ message: "Laboratory Staff not found" });
+        }
+
+        res.status(200).json({ message: "Laboratory Staff details retrieved successfully", existingLaboratoryStaff });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 05. Delete Laboratory Staff //
+//-----------------------------//
+
+exports.Delete_Laboratory_Staff = async (req, res) => {
+    try {
+        const { laboratoryStaffId } = req.params;
+
+        // --- Check if Laboratory Staff exists --- //
+        const existingLaboratoryStaff = await laboratory_staff.findById(laboratoryStaffId);
+
+        if (!existingLaboratoryStaff) {
+            return res.status(404).json({ message: "Laboratory Staff not found" });
+        }
+
+        await existingLaboratoryStaff.deleteOne();
+
+        res.status(200).json({ message: "Laboratory Staff deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};      

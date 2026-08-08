@@ -6,6 +6,7 @@ const laboratory_staff = require('../models/Laboratory_Staff');
 const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
+const patient = require('../models/Patient');
 const bcrypt = require('bcryptjs');
 
 // 01. Pharmacist Registration //
@@ -149,12 +150,7 @@ exports.Pharmacist_Registration = async (req, res) => {
         });
 
     } catch (error) {
-
-        res.status(500).json({
-            message: "Server Error",
-            error: error.message
-        });
-
+        res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
 
@@ -206,3 +202,47 @@ exports.Get_Pharmacist_Approve_Status = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+
+// 04. Get pharmacist details //
+//----------------------------//
+
+exports.Get_Pharmacist_Details = async (req, res) => {
+    try {
+        const { pharmacistId } = req.params;
+
+        // --- Check if Pharmacist exists --- //
+        const existingPharmacist = await pharmacist.findById(pharmacistId);
+
+        if (!existingPharmacist) {
+            return res.status(404).json({ message: "Pharmacist not found" });
+        }
+
+        res.status(200).json({ message: "Pharmacist details retrieved", pharmacistDetails: existingPharmacist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 05. Delete Pharmacist //
+//-----------------------//
+
+exports.Delete_Pharmacist = async (req, res) => {
+    try {
+        const { pharmacistId } = req.params;
+
+        // --- Check if Pharmacist exists --- //
+        const existingPharmacist = await pharmacist.findById(pharmacistId);
+
+        if (!existingPharmacist) {
+            return res.status(404).json({ message: "Pharmacist not found" });
+        }
+
+        await existingPharmacist.deleteOne();
+
+        res.status(200).json({ message: "Pharmacist deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};      

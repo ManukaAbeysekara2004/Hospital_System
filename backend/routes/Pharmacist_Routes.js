@@ -5,5 +5,7 @@ const PharmacistController = require('../controllers/Pharmacist_Controller');
 router.post('/registration', PharmacistController.Pharmacist_Registration);
 router.post('/login', PharmacistController.Pharmacist_Login);
 router.get('/approve-status/:pharmacistId', PharmacistController.Get_Pharmacist_Approve_Status);
+router.get('/details/:pharmacistId', PharmacistController.Get_Pharmacist_Details);
+router.delete('/delete/:pharmacistId', PharmacistController.Delete_Pharmacist);  
 
 module.exports = router;

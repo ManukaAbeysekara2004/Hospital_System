@@ -5,6 +5,7 @@ const laboratory_staff = require('../models/Laboratory_Staff');
 const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
+const patient = require('../models/Patient');
 const bcrypt = require('bcryptjs');
 
 // 01. Nurse Registration //
@@ -188,7 +189,32 @@ exports.Nurse_Login = async (req, res) => {
 };
 
 
-// 03. Get Nurse Approve Status //
+// 03. Nurse Logout //
+//------------------//
+
+exports.Nurse_Logout = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        // --- Change Availability to False --- //
+        existingNurse.InHospitalAvailability = false;
+        await existingNurse.save();
+
+        res.status(200).json({ message: "Logout successful", existingNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 04. Get Nurse Approve Status //
 //------------------------------//
 
 exports.Get_Nurse_Approve_Status = async (req, res) => {
@@ -207,3 +233,89 @@ exports.Get_Nurse_Approve_Status = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+
+// 05. Get Is Nurse In Hospital Availability Status //
+//--------------------------------------------------//
+
+exports.Get_Nurse_InHospital_Availability_Status = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        res.status(200).json({ message: "Nurse in-hospital availability status retrieved", inHospitalAvailabilityStatus: existingNurse.InHospitalAvailability });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 06. Get Is Nurse In Work Status //
+//---------------------------------//
+
+exports.Get_Nurse_InWork_Status = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        res.status(200).json({ message: "Nurse in-work status retrieved", inWorkStatus: existingNurse.InWork });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 07. Get Nurse Details //
+//-----------------------//
+
+exports.Get_Nurse_Details = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        res.status(200).json({ message: "Nurse details retrieved", nurseDetails: existingNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 08. Delete Nurse //
+//------------------//
+
+exports.Delete_Nurse = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        await existingNurse.deleteOne();
+
+        res.status(200).json({ message: "Nurse deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};      

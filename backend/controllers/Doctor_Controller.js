@@ -5,6 +5,7 @@ const laboratory_staff = require('../models/Laboratory_Staff');
 const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
+const patient = require('../models/Patient');
 const bcrypt = require('bcryptjs');
 
 // 01. Doctor Registration //
@@ -27,7 +28,8 @@ exports.Doctor_Registration = async (req, res) => {
             YearsOfExperience,
             Department,
             Email,
-            Password
+            Password,
+            RoomNumber
         } = req.body;
 
         
@@ -108,6 +110,16 @@ exports.Doctor_Registration = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(Password, salt);
 
+        // --- Check Room Number already exists --- //
+
+        const existingRoomNumber = await doctor.findOne({ RoomNumber });
+
+        if (existingRoomNumber) {
+            return res.status(400).json({
+                message: "Room Number already exists"
+            });
+        }
+
         // --- Save Doctor --- //
 
         const newDoctor = new doctor({
@@ -130,7 +142,11 @@ exports.Doctor_Registration = async (req, res) => {
             Role: "Doctor",
             Approve: false,
             InHospitalAvailability: false,
-            StopAppointments: false
+            StopAppointments: false,
+
+            // Number of Appointments and Room Number 
+            NoOfAppointments: 0,
+            RoomNumber: RoomNumber
         });
 
         await newDoctor.save();
@@ -172,6 +188,15 @@ exports.Doctor_Login = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
+        // --- Check if Doctor is Approved --- //
+        if (!existingDoctor.Approve) {
+            return res.status(403).json({ message: "Doctor account is not approved yet" });
+        }
+
+        // --- Change Availability to True --- //
+        existingDoctor.InHospitalAvailability = true;
+        await existingDoctor.save();
+
         res.status(200).json({ message: "Login successful", existingDoctor });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
@@ -179,7 +204,32 @@ exports.Doctor_Login = async (req, res) => {
 };
 
 
-// 03. Get Doctor Approve Status //
+// 03. Doctor Logout //
+//-------------------//
+
+exports.Doctor_Logout = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        // --- Change Availability to False --- //
+        existingDoctor.InHospitalAvailability = false;
+        await existingDoctor.save();
+
+        res.status(200).json({ message: "Logout successful", existingDoctor });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 04. Get Doctor Approve Status //
 //-------------------------------//
 
 exports.Get_Doctor_Approve_Status = async (req, res) => {
@@ -198,3 +248,89 @@ exports.Get_Doctor_Approve_Status = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+
+// 05. Get Doctor is In-Hospital Availability Status //
+//---------------------------------------------------//
+
+exports.Get_Doctor_InHospital_Availability_Status = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        res.status(200).json({ message: "In-Hospital availability status retrieved successfully", inHospitalAvailability: existingDoctor.InHospitalAvailability });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 06. Get Doctor Stop Appointments Status //
+//-----------------------------------------//
+
+exports.Get_Doctor_Stop_Appointments_Status = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        res.status(200).json({ message: "Stop appointments status retrieved successfully", stopAppointments: existingDoctor.StopAppointments });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 07. Get Doctor Details //
+//------------------------//
+
+exports.Get_Doctor_Details = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        res.status(200).json({ message: "Doctor details retrieved successfully", doctorDetails: existingDoctor });
+    } catch (error) {  
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 08. Delete Doctor //
+//-------------------//
+
+exports.Delete_Doctor = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        await existingDoctor.deleteOne();
+
+        res.status(200).json({ message: "Doctor deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};  

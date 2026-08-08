@@ -101,6 +101,19 @@ const doctorSchema = new mongoose.Schema({
         required: true,
     },
 
+    // Number of appointments And Room Number
+
+    NoOfAppointments: {
+        type: Number,
+        default: 0,
+        required: true,
+    },
+    RoomNumber: {  
+        type: String,
+        required: false,
+        unique: true,
+    },
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

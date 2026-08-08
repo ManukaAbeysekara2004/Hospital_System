@@ -5,6 +5,7 @@ const laboratory_staff = require('../models/Laboratory_Staff');
 const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
+const patient = require('../models/Patient');
 const bcrypt = require('bcryptjs');
 
 // 01. Receptionist Registration //
@@ -189,3 +190,47 @@ exports.Get_Receptionist_Approve_Status = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+
+// 04. Get Receptionist Details //
+//------------------------------//
+
+exports.Get_Receptionist_Details = async (req, res) => {
+    try {
+        const { receptionistId } = req.params;
+
+        // --- Check if Receptionist exists --- //
+        const existingReceptionist = await receptionist.findById(receptionistId);
+
+        if (!existingReceptionist) {
+            return res.status(404).json({ message: "Receptionist not found" });
+        }
+
+        res.status(200).json({ message: "Receptionist details retrieved", receptionistDetails: existingReceptionist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 05. Delete Receptionist //
+//-------------------------//
+
+exports.Delete_Receptionist = async (req, res) => {
+    try {
+        const { receptionistId } = req.params;
+
+        // --- Check if Receptionist exists --- //
+        const existingReceptionist = await receptionist.findById(receptionistId);
+
+        if (!existingReceptionist) {
+            return res.status(404).json({ message: "Receptionist not found" });
+        }
+
+        await existingReceptionist.deleteOne();
+
+        res.status(200).json({ message: "Receptionist deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};              
