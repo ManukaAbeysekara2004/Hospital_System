@@ -7,6 +7,7 @@ const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
 const patient = require('../models/Patient');
 const appointment = require('../models/Appointment');
+const nurseWorks = require('../models/Nurse_Works');
 const bcrypt = require('bcryptjs');
 
 // 01. Laboratory Staff Registration //

@@ -7,6 +7,7 @@ const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
 const patient = require('../models/Patient');
 const appointment = require('../models/Appointment');
+const nurseWorks = require('../models/Nurse_Works');
 const bcrypt = require('bcryptjs');
 
 // 01. Add Appointment //
@@ -155,9 +156,17 @@ exports.Get_All_Pending_Appointments = async (req, res) => {
         // --- Get All Pending Appointments --- //
         const allPendingAppointments = await appointment.find({ AppointmentStatus: "Pending" });
 
+        // --- Get Doctor Name and Contact Details --- //
+        const existingDoctor = await doctor.findById(allPendingAppointments.DoctorID).select("FullName PhoneNumber");
+
+        // --- Get Patient Details --- //
+        const existingPatient = await patient.findById(allPendingAppointments.PatientID);
+
         res.status(200).json({
             message: "All pending appointments",
             allPendingAppointments,
+            existingDoctor,
+            existingPatient,
         });
 
     } catch (error) {
@@ -178,9 +187,17 @@ exports.Get_All_Inprogress_Appointments = async (req, res) => {
         // --- Get All Inprogress Appointments --- //
         const allInprogressAppointments = await appointment.find({ AppointmentStatus: "Inprogress" });
 
+        // --- Get Doctor Name and Contact Details --- //
+        const existingDoctor = await doctor.findById(allInprogressAppointments.DoctorID).select("FullName PhoneNumber");
+
+        // --- Get Patient Details --- //
+        const existingPatient = await patient.findById(allInprogressAppointments.PatientID);
+
         res.status(200).json({
             message: "All inprogress appointments",
             allInprogressAppointments,
+            existingDoctor,
+            existingPatient,
         });
 
     } catch (error) {
@@ -201,9 +218,17 @@ exports.Get_All_Waiting_For_Result_Appointments = async (req, res) => {
         // --- Get All Waiting For Result Appointments --- //
         const allWaitingForResultAppointments = await appointment.find({ AppointmentStatus: "Waiting For Result" });
 
+        // --- Get Doctor Name and Contact Details --- //
+        const existingDoctor = await doctor.findById(allWaitingForResultAppointments.DoctorID).select("FullName PhoneNumber");
+
+        // --- Get Patient Details --- //
+        const existingPatient = await patient.findById(allWaitingForResultAppointments.PatientID);
+
         res.status(200).json({
             message: "All waiting for result appointments",
             allWaitingForResultAppointments,
+            existingDoctor,
+            existingPatient,
         });
 
     } catch (error) {
@@ -224,9 +249,17 @@ exports.Get_All_Completed_Appointments = async (req, res) => {
         // --- Get All Completed Appointments --- //
         const allCompletedAppointments = await appointment.find({ AppointmentStatus: "Completed" });
 
+        // --- Get Doctor Name and Contact Details --- //
+        const existingDoctor = await doctor.findById(allCompletedAppointments.DoctorID).select("FullName PhoneNumber");
+
+        // --- Get Patient Details --- //
+        const existingPatient = await patient.findById(allCompletedAppointments.PatientID);
+
         res.status(200).json({
             message: "All completed appointments",
             allCompletedAppointments,
+            existingDoctor,
+            existingPatient,
         });
 
     } catch (error) {
@@ -247,9 +280,17 @@ exports.Get_All_Cancelled_Appointments = async (req, res) => {
         // --- Get All Cancelled Appointments --- //
         const allCancelledAppointments = await appointment.find({ AppointmentStatus: "Cancelled" });
 
+        // --- Get Doctor Name and Contact Details --- //
+        const existingDoctor = await doctor.findById(allCancelledAppointments.DoctorID).select("FullName PhoneNumber");
+
+        // --- Get Patient Details --- //
+        const existingPatient = await patient.findById(allCancelledAppointments.PatientID);
+
         res.status(200).json({
             message: "All cancelled appointments",
             allCancelledAppointments,
+            existingDoctor,
+            existingPatient,
         });
 
     } catch (error) {
@@ -343,9 +384,17 @@ exports.Get_All_Appointments_By_Doctor_ID = async (req, res) => {
             });
         }
 
+        // --- Get Doctor Name and Contact Details --- //
+        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber");
+
+        // --- Get Patient Details --- //
+        const existingPatient = await patient.findById(existingAppointment.PatientID);
+
         res.status(200).json({
-            message: "Appointment found successfully",
+            message: "Appointment details found successfully",
             existingAppointment,
+            existingDoctor,
+            existingPatient,
         });
 
     } catch (error) {
@@ -373,9 +422,17 @@ exports.Get_All_Appointments_By_Patient_ID = async (req, res) => {
             });
         }
 
+        // --- Get Doctor Name and Contact Details --- //
+        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber");
+
+        // --- Get Patient Details --- //
+        const existingPatient = await patient.findById(existingAppointment.PatientID);
+
         res.status(200).json({
-            message: "Appointment found successfully",
+            message: "Appointment details found successfully",
             existingAppointment,
+            existingDoctor,
+            existingPatient,
         });
 
     } catch (error) {
@@ -403,9 +460,17 @@ exports.Get_All_Appointments_By_Date = async (req, res) => {
             });
         }
 
+        // --- Get Doctor Name and Contact Details --- //
+        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber");
+
+        // --- Get Patient Details --- //
+        const existingPatient = await patient.findById(existingAppointment.PatientID);
+
         res.status(200).json({
-            message: "Appointment found successfully",
+            message: "Appointment details found successfully",
             existingAppointment,
+            existingDoctor,
+            existingPatient,
         });
 
     } catch (error) {
@@ -438,7 +503,7 @@ exports.Get_Appointment_Details = async (req, res) => {
         const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber");
 
         // --- Get Patient Details --- //
-        const existingPatient = await patient.findById(existingAppointment.PatientID).select("FullName PhoneNumber");
+        const existingPatient = await patient.findById(existingAppointment.PatientID);
 
         res.status(200).json({
             message: "Appointment details found successfully",

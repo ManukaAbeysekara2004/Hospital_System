@@ -7,6 +7,7 @@ const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
 const patient = require('../models/Patient');
 const appointment = require('../models/Appointment');
+const nurseWorks = require('../models/Nurse_Works');
 const bcrypt = require('bcryptjs');
 
 // 01. Add Patient Record //
@@ -88,8 +89,8 @@ exports.Add_Patient_Record = async (req, res) => {
 };
 
 
-// 02. Search Patient //
-//--------------------//
+// 02. Search Patient By NIC //
+//---------------------------//
 
 exports.Search_Patient = async (req, res) => {
     try {
@@ -109,7 +110,28 @@ exports.Search_Patient = async (req, res) => {
 };
 
 
-// 03. Delete Patient //
+// 03. Search Patient By PatientRegID //
+//------------------------------------//
+
+exports.Search_Patient_By_PatientRegID = async (req, res) => {
+    try {
+        const { PatientRegID } = req.params;
+
+        // --- Check if Patient exists --- //
+        const existingPatient = await patient.findOne({ PatientRegID });
+
+        if (!existingPatient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+
+        res.status(200).json({ message: "Patient found successfully", existingPatient });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 04. Delete Patient //
 //--------------------//
 
 exports.Delete_Patient = async (req, res) => {
