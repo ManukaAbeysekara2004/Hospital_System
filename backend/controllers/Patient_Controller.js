@@ -6,6 +6,7 @@ const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
 const patient = require('../models/Patient');
+const appointment = require('../models/Appointment');
 const bcrypt = require('bcryptjs');
 
 // 01. Add Patient Record //

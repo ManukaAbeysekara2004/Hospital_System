@@ -27,15 +27,14 @@ const patientSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    RegistrationDate: {
-        type: Date,
-        default: Date.now,
-        required: true,
-    },
     PatientRegID: {
         type: String,
         required: true,
         unique: true,
+    },
+    RegistrationDate: {
+        type: Date,
+        default: Date.now,
     },
 
 

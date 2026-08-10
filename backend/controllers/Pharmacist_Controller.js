@@ -1,4 +1,3 @@
-const e = require('express');
 const accountant = require('../models/Accountant');
 const admin = require('../models/Admin');
 const doctor = require('../models/Doctor');
@@ -7,6 +6,7 @@ const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
 const patient = require('../models/Patient');
+const appointment = require('../models/Appointment');
 const bcrypt = require('bcryptjs');
 
 // 01. Pharmacist Registration //

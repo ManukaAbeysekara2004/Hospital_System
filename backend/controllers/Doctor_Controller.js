@@ -6,6 +6,7 @@ const nurse = require('../models/Nurse');
 const pharmacist = require('../models/Pharmacist');
 const receptionist = require('../models/Receptionist');
 const patient = require('../models/Patient');
+const appointment = require('../models/Appointment');
 const bcrypt = require('bcryptjs');
 
 // 01. Doctor Registration //
@@ -292,7 +293,33 @@ exports.Get_Doctor_Stop_Appointments_Status = async (req, res) => {
 };
 
 
-// 07. Get Doctor Details //
+// 07. Update Doctor stop Appoinment Status //
+//------------------------------------------//
+
+exports.Update_Doctor_Stop_Appointments_Status = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+        const { StopAppointments } = req.body;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        // --- Update Doctor stop Appointments Status --- //
+        existingDoctor.StopAppointments = StopAppointments;
+        await existingDoctor.save();
+
+        res.status(200).json({ message: "Doctor stop appointments status updated successfully", existingDoctor });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 08. Get Doctor Details //
 //------------------------//
 
 exports.Get_Doctor_Details = async (req, res) => {
@@ -313,7 +340,7 @@ exports.Get_Doctor_Details = async (req, res) => {
 };
 
 
-// 08. Delete Doctor //
+// 09. Delete Doctor //
 //-------------------//
 
 exports.Delete_Doctor = async (req, res) => {
