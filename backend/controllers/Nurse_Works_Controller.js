@@ -8,6 +8,8 @@ const receptionist = require('../models/Receptionist');
 const patient = require('../models/Patient');
 const appointment = require('../models/Appointment');
 const nurseWorks = require('../models/Nurse_Works');
+const bloodTest = require('../models/Blood_Test');
+const urineTest = require('../models/Urine_Test');
 const bcrypt = require('bcryptjs');
 
 // 01. Create Nurse Works //
@@ -307,7 +309,7 @@ exports.Get_Nurse_Work_Details = async (req, res) => {
 exports.Get_All_AllDone_true_Nurse_Works = async (req, res) => {
     try {
 
-        // --- Find All AllDone true Nurse Works ---
+        // --- Find All AllDone true Nurse Works --- //
 
         const AllDoneTrueNurseWorks = await nurseWorks.find({ AllDone: true });
 
@@ -339,7 +341,7 @@ exports.Get_All_AllDone_true_Nurse_Works = async (req, res) => {
 exports.Get_All_AllDone_false_Nurse_Works = async (req, res) => {
     try {
 
-        // --- Find All AllDone false Nurse Works ---
+        // --- Find All AllDone false Nurse Works --- //
 
         const AllDoneFalseNurseWorks = await nurseWorks.find({ AllDone: false });
 
@@ -377,6 +379,13 @@ exports.Get_Nurse_Work_By_NurseId = async (req, res) => {
 
         const nurse_work = await nurseWorks.find({ NurseID });
 
+        // --- Check Nurse_Work exists --- //
+        if (!nurse_work) {
+            return res.status(404).json({
+                message: "Nurse work not found"
+            });
+        }
+
         // --- Get Patient Details --- //
         const existingPatient = await patient.findById(nurse_work.PatientID);
 
@@ -410,6 +419,13 @@ exports.Get_Nurse_Work_By_Patient_ID = async (req, res) => {
         // --- Find Nurse_Work by Patient_ID --- //
 
         const nurse_work = await nurseWorks.find({ PatientID: Patient_ID });
+
+        // --- Check Nurse_Work exists --- //
+        if (!nurse_work) {
+            return res.status(404).json({
+                message: "Nurse work not found"
+            });
+        }
 
         // --- Get Patient Details --- //
         const existingPatient = await patient.findById(nurse_work.PatientID);

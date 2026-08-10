@@ -6,7 +6,7 @@ const PatientController = require('../controllers/Patient_Controller')
 router.post('/add-patient', PatientController.Add_Patient_Record);
 
 // 02. Search Patient By NIC//
-router.get('/search/:NICNumber', PatientController.Search_Patient);
+router.get('/search/:NICNumber', PatientController.Search_Patient_NIC);
 
 // 03. Search Patient By PatientRegID//
 router.get('/search-by-id/:PatientRegID', PatientController.Search_Patient_By_PatientRegID);

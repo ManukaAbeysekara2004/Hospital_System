@@ -8,6 +8,8 @@ const receptionist = require('../models/Receptionist');
 const patient = require('../models/Patient');
 const appointment = require('../models/Appointment');
 const nurseWorks = require('../models/Nurse_Works');
+const bloodTest = require('../models/Blood_Test');
+const urineTest = require('../models/Urine_Test');
 const bcrypt = require('bcryptjs');
 
 // 01. Add Patient Record //
@@ -92,7 +94,7 @@ exports.Add_Patient_Record = async (req, res) => {
 // 02. Search Patient By NIC //
 //---------------------------//
 
-exports.Search_Patient = async (req, res) => {
+exports.Search_Patient_NIC = async (req, res) => {
     try {
         const { NICNumber } = req.params;
 

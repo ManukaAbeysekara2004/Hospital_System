@@ -39,7 +39,7 @@ router.get('/get-all-appointments-by-doctor/:DoctorID', AppointmentController.Ge
 router.get('/get-all-appointments-by-patient/:PatientID', AppointmentController.Get_All_Appointments_By_Patient_ID);
 
 // 13. Get All Appointments By Date //
-router.get('/get-all-appointments-by-date/:date', AppointmentController.Get_All_Appointments_By_Date);
+router.get('/get-all-appointments-by-date/:AppointmentDate', AppointmentController.Get_All_Appointments_By_Date);
 
 // 14. Get Appointment Details with doctor and patient details //
 router.get('/get-appointment-details/:appointmentId', AppointmentController.Get_Appointment_Details);
