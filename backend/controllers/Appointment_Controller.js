@@ -10,6 +10,8 @@ const appointment = require('../models/Appointment');
 const nurseWorks = require('../models/Nurse_Works');
 const bloodTest = require('../models/Blood_Test');
 const urineTest = require('../models/Urine_Test');
+const medicine = require('../models/Medicine');
+const medicineBill = require('../models/Medicine_Bill');
 const bcrypt = require('bcryptjs');
 
 // 01. Add Appointment //

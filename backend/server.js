@@ -24,6 +24,7 @@ app.use('/api/appointment', require('./routes/Appointment_Routes'));
 app.use('/api/doctor', require('./routes/Doctor_Routes'));
 app.use('/api/lab-test', require('./routes/Lab_Test_Routes'));
 app.use('/api/laboratory_staff', require('./routes/Laboratory_Staff_Routes'));
+app.use('/api/medicine', require('./routes/Medicine_Routes'));
 app.use('/api/nurse', require('./routes/Nurse_Routes'));
 app.use('/api/nurse-works', require('./routes/Nurse_Works_Routes'));
 app.use('/api/patient', require('./routes/Patient_Routes'));
