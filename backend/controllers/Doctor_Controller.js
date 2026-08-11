@@ -12,6 +12,7 @@ const bloodTest = require('../models/Blood_Test');
 const urineTest = require('../models/Urine_Test');
 const medicine = require('../models/Medicine');
 const medicineBill = require('../models/Medicine_Bill');
+const payment = require('../models/Payment');
 const bcrypt = require('bcryptjs');
 
 // 01. Doctor Registration //

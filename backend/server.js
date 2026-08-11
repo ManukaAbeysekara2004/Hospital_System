@@ -28,6 +28,7 @@ app.use('/api/medicine', require('./routes/Medicine_Routes'));
 app.use('/api/nurse', require('./routes/Nurse_Routes'));
 app.use('/api/nurse-works', require('./routes/Nurse_Works_Routes'));
 app.use('/api/patient', require('./routes/Patient_Routes'));
+app.use('/api/payment', require('./routes/Payment_Routes'));
 app.use('/api/pharmacist', require('./routes/Pharmacist_Routes'));
 app.use('/api/receptionist', require('./routes/Receptionist_Routes'));
 

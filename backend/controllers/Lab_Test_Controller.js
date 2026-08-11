@@ -12,6 +12,7 @@ const bloodTest = require('../models/Blood_Test');
 const urineTest = require('../models/Urine_Test');
 const medicine = require('../models/Medicine');
 const medicineBill = require('../models/Medicine_Bill');
+const payment = require('../models/Payment');
 const bcrypt = require('bcryptjs');
 
 // 01. Request for Blood Test //
@@ -51,52 +52,76 @@ exports.request_Urine_Test = async (req, res) => {
 }
 
 // 03. Get CompleteStatus False Blood Test //
-//-------------------------------------//
+//-----------------------------------------//
 
 exports.get_Complete_Status_False_Blood_Test = async (req, res) => {
     try {
         const PendingBloodTest = await bloodTest.find({ CompleteStatus: false });
 
-        res.status(200).json({ success: true, data: PendingBloodTest });
+        // --- Get Patient FullName and PatientRegID By PatientID ---
+        const PatientDetails = await patient.findById(PendingBloodTest.PatientID);
+
+        // --- Get Doctor FullName and DoctorRegID By DoctorID ---
+        const DoctorDetails = await doctor.findById(PendingBloodTest.DoctorID).select("FullName PhoneNumber");
+
+        res.status(200).json({ success: true, data: { PendingBloodTest, PatientDetails, DoctorDetails } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 }
 
 // 04. Get CompleteStatus False Urine Test //
-//-------------------------------------//
+//-----------------------------------------//
 
 exports.get_Complete_Status_False_Urine_Test = async (req, res) => {
     try {
         const PendingUrineTest = await urineTest.find({ CompleteStatus: false });
 
-        res.status(200).json({ success: true, data: PendingUrineTest });
+        // --- Get Patient FullName and PatientRegID By PatientID ---
+        const PatientDetails = await patient.findById(PendingUrineTest.PatientID);
+
+        // --- Get Doctor FullName and DoctorRegID By DoctorID ---
+        const DoctorDetails = await doctor.findById(PendingUrineTest.DoctorID).select("FullName PhoneNumber");
+
+        res.status(200).json({ success: true, data: { PendingUrineTest, PatientDetails, DoctorDetails } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 }
 
 // 05. Get CompleteStatus True Blood Test //
-//------------------------------------//
+//----------------------------------------//
 
 exports.get_Complete_Status_True_Blood_Test = async (req, res) => {
     try {
         const CompletedBloodTest = await bloodTest.find({ CompleteStatus: true });
 
-        res.status(200).json({ success: true, data: CompletedBloodTest });
+        // --- Get Patient FullName and PatientRegID By PatientID ---
+        const PatientDetails = await patient.findById(CompletedBloodTest.PatientID);
+
+        // --- Get Doctor FullName and DoctorRegID By DoctorID ---
+        const DoctorDetails = await doctor.findById(CompletedBloodTest.DoctorID).select("FullName PhoneNumber");
+
+        res.status(200).json({ success: true, data: { CompletedBloodTest, PatientDetails, DoctorDetails } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 }
 
 // 06. Get CompleteStatus True Urine Test //
-//------------------------------------//
+//----------------------------------------//
 
 exports.get_Complete_Status_True_Urine_Test = async (req, res) => {
     try {
         const CompletedUrineTest = await urineTest.find({ CompleteStatus: true });
         
-        res.status(200).json({ success: true, data: CompletedUrineTest });
+        // --- Get Patient FullName and PatientRegID By PatientID ---
+        const PatientDetails = await patient.findById(CompletedUrineTest.PatientID);
+
+        // --- Get Doctor FullName and DoctorRegID By DoctorID ---
+        const DoctorDetails = await doctor.findById(CompletedUrineTest.DoctorID).select("FullName PhoneNumber");
+
+        res.status(200).json({ success: true, data: { CompletedUrineTest, PatientDetails, DoctorDetails } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
