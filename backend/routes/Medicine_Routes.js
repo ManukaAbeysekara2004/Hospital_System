@@ -26,7 +26,7 @@ router.delete('/delete-medicine/:MedicineID', MedicineController.delete_Medicine
 router.get('/get-all-medicine-details', MedicineController.get_All_Medicine_Details);
 
 // 08. Get Medicine Details by TabletName //
-router.get('/get-medicine-details', MedicineController.get_Medicine_Details);
+router.get('/get-medicine-details', MedicineController.get_Medicine_Details_by_TabletName);
 
 // ------------------------ Medicine Bill ------------------------//
 

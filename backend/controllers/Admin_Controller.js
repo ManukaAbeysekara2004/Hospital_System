@@ -240,3 +240,320 @@ exports.Delete_Admin = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+
+// ------------------------ Admin Manage ------------------------//
+
+// 06. Get All Accountant Details //
+//--------------------------------//
+
+exports.Get_All_Accountant_Details = async (req, res) => {
+    try {
+        const allAccountant = await accountant.find();
+
+        if (allAccountant.length === 0) {
+            return res.status(404).json({ message: "No Accountant Found" });
+        }
+
+        res.status(200).json({ message: "All Accountant Details Retrieved", allAccountant });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 07. Get All Admin Details //
+//---------------------------//
+
+exports.Get_All_Admin_Details = async (req, res) => {
+    try {
+        const allAdmin = await admin.find();
+
+        if (allAdmin.length === 0) {
+            return res.status(404).json({ message: "No Admin Found" });
+        }
+
+        res.status(200).json({ message: "All Admin Details Retrieved", allAdmin });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 08. Get All Doctor Details //
+//----------------------------//
+
+exports.Get_All_Doctor_Details = async (req, res) => {
+    try {
+        const allDoctor = await doctor.find();
+
+        if (allDoctor.length === 0) {
+            return res.status(404).json({ message: "No Doctor Found" });
+        }
+
+        res.status(200).json({ message: "All Doctor Details Retrieved", allDoctor });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 09. Get All Lab Staff Details //
+//-------------------------------//
+
+exports.Get_All_Lab_Staff_Details = async (req, res) => {
+    try {
+        const allLabStaff = await laboratory_staff.find();
+
+        if (allLabStaff.length === 0) {
+            return res.status(404).json({ message: "No Lab Staff Found" });
+        }
+
+        res.status(200).json({ message: "All Lab Staff Details Retrieved", allLabStaff });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 10. Get All Nurse Details //
+//---------------------------//
+
+exports.Get_All_Nurse_Details = async (req, res) => {
+    try {
+        const allNurse = await nurse.find();
+
+        if (allNurse.length === 0) {
+            return res.status(404).json({ message: "No Nurse Found" });
+        }
+
+        res.status(200).json({ message: "All Nurse Details Retrieved", allNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 11. Get All Patient Details //
+//-----------------------------//
+
+exports.Get_All_Patient_Details = async (req, res) => {
+    try {
+        const allPatient = await patient.find();
+
+        if (allPatient.length === 0) {
+            return res.status(404).json({ message: "No Patient Found" });
+        }
+
+        res.status(200).json({ message: "All Patient Details Retrieved", allPatient });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 12. Get All Pharmacist Details //
+//--------------------------------//
+
+exports.Get_All_Pharmacist_Details = async (req, res) => {
+    try {
+        const allPharmacist = await pharmacist.find();
+
+        if (allPharmacist.length === 0) {
+            return res.status(404).json({ message: "No Pharmacist Found" });
+        }
+
+        res.status(200).json({ message: "All Pharmacist Details Retrieved", allPharmacist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 13. Get All Receptionist Details //
+//----------------------------------//
+
+exports.Get_All_Receptionist_Details = async (req, res) => {
+    try {
+        const allReceptionist = await receptionist.find();
+
+        if (allReceptionist.length === 0) {
+            return res.status(404).json({ message: "No Receptionist Found" });
+        }
+
+        res.status(200).json({ message: "All Receptionist Details Retrieved", allReceptionist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// ----- Update Approve Status ----- //
+
+// 14. Update Accountant Approve Status //
+//--------------------------------------//
+
+exports.Update_Accountant_Approve_Status = async (req, res) => {
+    try {
+        const { accountantId } = req.params;
+        const { Approve } = req.body;
+
+        // --- Check if Accountant exists --- //
+        const existingAccountant = await accountant.findById(accountantId);
+
+        if (!existingAccountant) {
+            return res.status(404).json({ message: "Accountant not found" });
+        }
+
+        // --- Update Approve Status --- //
+        existingAccountant.Approve = Approve;
+        await existingAccountant.save();
+
+        res.status(200).json({ message: "Accountant Approve Status Updated", existingAccountant });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 15. Update Admin Approve Status //
+//---------------------------------//
+
+exports.Update_Admin_Approve_Status = async (req, res) => {
+    try {
+        const { adminId } = req.params;
+        const { Approve } = req.body;
+
+        // --- Check if Admin exists --- //
+        const existingAdmin = await admin.findById(adminId);
+
+        if (!existingAdmin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        // --- Update Approve Status --- //
+        existingAdmin.Approve = Approve;
+        await existingAdmin.save();
+
+        res.status(200).json({ message: "Admin Approve Status Updated", existingAdmin });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 16. Update Doctor Approve Status //
+//---------------------------------//
+
+exports.Update_Doctor_Approve_Status = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+        const { Approve } = req.body;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        // --- Update Approve Status --- //
+        existingDoctor.Approve = Approve;
+        await existingDoctor.save();
+
+        res.status(200).json({ message: "Doctor Approve Status Updated", existingDoctor });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 17. Update Lab Staff Approve Status //
+//-------------------------------------//
+
+exports.Update_Lab_Staff_Approve_Status = async (req, res) => {
+    try {
+        const { labStaffId } = req.params;
+        const { Approve } = req.body;
+
+        // --- Check if Lab Staff exists --- //
+        const existingLabStaff = await laboratory_staff.findById(labStaffId);
+
+        if (!existingLabStaff) {
+            return res.status(404).json({ message: "Lab Staff not found" });
+        }
+
+        // --- Update Approve Status --- //
+        existingLabStaff.Approve = Approve;
+        await existingLabStaff.save();
+
+        res.status(200).json({ message: "Lab Staff Approve Status Updated", existingLabStaff });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 18. Update Nurse Approve Status //
+//---------------------------------//
+
+exports.Update_Nurse_Approve_Status = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+        const { Approve } = req.body;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        // --- Update Approve Status --- //
+        existingNurse.Approve = Approve;
+        await existingNurse.save();
+
+        res.status(200).json({ message: "Nurse Approve Status Updated", existingNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 19. Update Pharmacist Approve Status //
+//--------------------------------------//
+
+exports.Update_Pharmacist_Approve_Status = async (req, res) => {
+    try {
+        const { pharmacistId } = req.params;
+        const { Approve } = req.body;
+
+        // --- Check if Pharmacist exists --- //
+        const existingPharmacist = await pharmacist.findById(pharmacistId);
+
+        if (!existingPharmacist) {
+            return res.status(404).json({ message: "Pharmacist not found" });
+        }
+
+        // --- Update Approve Status --- //
+        existingPharmacist.Approve = Approve;
+        await existingPharmacist.save();
+
+        res.status(200).json({ message: "Pharmacist Approve Status Updated", existingPharmacist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 20. Update Receptionist Approve Status //
+//--------------------------------------//
+
+exports.Update_Receptionist_Approve_Status = async (req, res) => {
+    try {
+        const { receptionistId } = req.params;
+        const { Approve } = req.body;
+
+        // --- Check if Receptionist exists --- //
+        const existingReceptionist = await receptionist.findById(receptionistId);
+
+        if (!existingReceptionist) {
+            return res.status(404).json({ message: "Receptionist not found" });
+        }
+
+        // --- Update Approve Status --- //
+        existingReceptionist.Approve = Approve;
+        await existingReceptionist.save();
+
+        res.status(200).json({ message: "Receptionist Approve Status Updated", existingReceptionist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};

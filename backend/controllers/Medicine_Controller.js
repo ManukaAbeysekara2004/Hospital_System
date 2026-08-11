@@ -172,7 +172,7 @@ exports.get_All_Medicine_Details = async (req, res) => {
 // 08. Get Medicine Details by TabletName //
 //----------------------------------------//
 
-exports.get_Medicine_Details = async (req, res) => {
+exports.get_Medicine_Details_by_TabletName = async (req, res) => {
     try {
         const { TabletName } = req.body;
 
