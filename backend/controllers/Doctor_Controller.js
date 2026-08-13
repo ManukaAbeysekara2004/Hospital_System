@@ -368,3 +368,72 @@ exports.Delete_Doctor = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };  
+
+// ------------------------ Update User ------------------------//
+
+// 10. Update Phone Number //
+//-------------------------//
+
+exports.Update_Phone_Number = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+        const { PhoneNumber } = req.body;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        // --- Update Phone Number --- //
+        existingDoctor.PhoneNumber = PhoneNumber;
+        await existingDoctor.save();
+
+        res.status(200).json({ message: "Doctor Phone Number Updated", existingDoctor });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 11. Update Password //
+//---------------------//
+
+exports.Update_Password = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+        const { OldPassword, NewPassword } = req.body;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        // --- Check Old Password --- //
+        const isOldPasswordValid = await bcrypt.compare(OldPassword, existingDoctor.Password);
+
+        if (!isOldPasswordValid) {
+            return res.status(400).json({ message: "Invalid old password" });
+        }
+
+        // --- Password Validation --- //
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Hash New Password --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        // --- Update Password --- //
+        existingDoctor.Password = hashedPassword;
+        await existingDoctor.save();
+
+        res.status(200).json({ message: "Doctor Password Updated", existingDoctor });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};

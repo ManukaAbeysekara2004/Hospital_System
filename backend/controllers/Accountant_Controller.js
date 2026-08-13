@@ -244,3 +244,84 @@ exports.Delete_Accountant = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };  
+
+
+// ------------------------ Update User ------------------------//
+
+// 06. Update Contact Number //
+//---------------------------//
+
+exports.Update_Contact_Number = async (req, res) => {
+    try {
+        const { accountantId } = req.params;
+        const { PhoneNumber } = req.body;
+
+        // --- Check if Accountant exists --- //
+        const existingAccountant = await accountant.findById(accountantId);
+
+        if (!existingAccountant) {
+            return res.status(404).json({ message: "Accountant not found" });
+        }
+
+        // --- Validate Phone Number, Must be exactly 10 digits --- //
+
+        if (!/^\d{10}$/.test(PhoneNumber)) {
+            return res.status(400).json({
+                message: "Phone Number must contain exactly 10 digits"
+            });
+        }
+
+        existingAccountant.PhoneNumber = PhoneNumber;
+        await existingAccountant.save();
+
+        res.status(200).json({ message: "Contact Number updated successfully", existingAccountant });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 07. Update Password //
+//---------------------//
+
+exports.Update_Password = async (req, res) => {
+    try {
+        const { accountantId } = req.params;
+        const { OldPassword, NewPassword } = req.body;
+
+        // --- Check if Accountant exists --- //
+        const existingAccountant = await accountant.findById(accountantId);
+
+        if (!existingAccountant) {
+            return res.status(404).json({ message: "Accountant not found" });
+        }
+
+        // --- Check Old Password --- //
+
+        const isOldPasswordValid = await bcrypt.compare(OldPassword, existingAccountant.Password);
+        
+        if (!isOldPasswordValid) {
+            return res.status(400).json({ message: "Invalid old password" });
+        }
+
+        // --- Password Validation --- //
+
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Hash Password --- //
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(Password, salt);
+
+        existingAccountant.Password = hashedPassword;
+        await existingAccountant.save();
+
+        res.status(200).json({ message: "Password updated successfully", existingAccountant });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};

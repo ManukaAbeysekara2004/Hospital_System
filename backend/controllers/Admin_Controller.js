@@ -656,3 +656,72 @@ exports.Update_Urine_Test_Price = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+// ------------------------ Update User ------------------------//
+
+// 25. Update Phone Number //
+//-------------------------//
+
+exports.Update_Phone_Number = async (req, res) => {
+    try {
+        const { adminId } = req.params;
+        const { PhoneNumber } = req.body;
+
+        // --- Check if Admin exists --- //
+        const existingAdmin = await admin.findById(adminId);
+
+        if (!existingAdmin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        // --- Update Phone Number --- //
+        existingAdmin.PhoneNumber = PhoneNumber;
+        await existingAdmin.save();
+
+        res.status(200).json({ message: "Admin Phone Number Updated", existingAdmin });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 26. Update Password //
+//---------------------//
+
+exports.Update_Password = async (req, res) => {
+    try {
+        const { adminId } = req.params;
+        const { OldPassword, NewPassword } = req.body;
+
+        // --- Check if Admin exists --- //
+        const existingAdmin = await admin.findById(adminId);
+
+        if (!existingAdmin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        // --- Check Old Password --- //
+        const isOldPasswordValid = await bcrypt.compare(OldPassword, existingAdmin.Password);
+
+        if (!isOldPasswordValid) {
+            return res.status(400).json({ message: "Invalid old password" });
+        }
+
+        // --- Password Validation --- //
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Hash New Password --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        // --- Update Password --- //
+        existingAdmin.Password = hashedPassword;
+        await existingAdmin.save();
+
+        res.status(200).json({ message: "Admin Password Updated", existingAdmin });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};

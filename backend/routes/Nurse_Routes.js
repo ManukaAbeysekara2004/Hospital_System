@@ -26,4 +26,12 @@ router.get('/details/:nurseId', NurseController.Get_Nurse_Details);
 // 08. Delete Nurse //
 router.delete('/delete/:nurseId', NurseController.Delete_Nurse);  
 
+// ------------------------ Update User ------------------------//
+
+// 09. Update Phone Number //
+router.patch('/update-phone-number/:nurseId', NurseController.Update_Phone_Number);
+
+// 10. Update Password //
+router.patch('/update-password/:nurseId', NurseController.Update_Password);
+
 module.exports = router;

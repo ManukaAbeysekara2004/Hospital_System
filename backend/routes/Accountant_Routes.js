@@ -17,4 +17,12 @@ router.get('/details/:accountantId', AccountantController.Get_Accountant_Details
 // 05. Delete Accountant //
 router.delete('/delete/:accountantId', AccountantController.Delete_Accountant);
 
+// ------------------------ Update User ------------------------//
+
+// 06. Update Contact Number //
+router.patch('/update-contact-number/:accountantId', AccountantController.Update_Contact_Number);
+
+// 07. Update Password //
+router.patch('/update-password/:accountantId', AccountantController.Update_Password);
+
 module.exports = router;

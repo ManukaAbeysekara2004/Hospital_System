@@ -78,4 +78,12 @@ router.put('/update-blood-test-price/:billPriceId', AdminController.Update_Blood
 // 24. Update Urine_Test_Price //
 router.put('/update-urine-test-price/:billPriceId', AdminController.Update_Urine_Test_Price);
 
+// ------------------------ Update User ------------------------//
+
+// 25. Update Phone Number //
+router.patch('/update-phone-number/:adminId', AdminController.Update_Phone_Number);
+
+// 26. Update Password //
+router.patch('/update-password/:adminId', AdminController.Update_Password);
+
 module.exports = router;

@@ -158,3 +158,39 @@ exports.Delete_Patient = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 }; 
+
+// ------------------------ Update User ------------------------//
+
+// 05. Update Contact Number //
+//---------------------------//
+
+exports.Update_Contact_Number = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        const { ContactNumber } = req.body;
+
+        // --- Check if Patient exists --- //
+        const existingPatient = await patient.findById(patientId);
+
+        if (!existingPatient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+
+        // --- Validate Contact Number --- //
+        if (!ContactNumber) {
+            return res.status(400).json({ message: "Contact number is required" });
+        }
+
+        if (!/^\d{10}$/.test(ContactNumber)) {
+            return res.status(400).json({ message: "Contact Number must contain exactly 10 digits" });
+        }
+
+        // --- Update Contact Number --- //
+        existingPatient.ContactNumber = ContactNumber;
+        await existingPatient.save();
+
+        res.status(200).json({ message: "Patient contact number updated", patientDetails: existingPatient });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};

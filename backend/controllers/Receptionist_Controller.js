@@ -241,4 +241,75 @@ exports.Delete_Receptionist = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
-};              
+};
+
+// ------------------------ Update User ------------------------//
+
+// 06. Update Phone Number //
+//-------------------------//
+
+exports.Update_Phone_Number = async (req, res) => {
+    try {
+        const { receptionistId } = req.params;
+        const { PhoneNumber } = req.body;
+
+        // --- Check if Receptionist exists --- //
+        const existingReceptionist = await receptionist.findById(receptionistId);
+
+        if (!existingReceptionist) {
+            return res.status(404).json({ message: "Receptionist not found" });
+        }
+
+        // --- Update Phone Number --- //
+        existingReceptionist.PhoneNumber = PhoneNumber;
+        await existingReceptionist.save();
+
+        res.status(200).json({ message: "Phone Number updated successfully", existingReceptionist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 07. Update Password //
+//---------------------//
+
+exports.Update_Password = async (req, res) => {
+    try {
+        const { receptionistId } = req.params;
+        const { OldPassword, NewPassword } = req.body;
+
+        // --- Check if Receptionist exists --- //
+        const existingReceptionist = await receptionist.findById(receptionistId);
+
+        if (!existingReceptionist) {
+            return res.status(404).json({ message: "Receptionist not found" });
+        }
+
+        // --- Validate Old Password --- //
+        const isOldPasswordValid = await bcrypt.compare(OldPassword, existingReceptionist.Password);
+
+        if (!isOldPasswordValid) {
+            return res.status(400).json({ message: "Invalid old password" });
+        }
+
+        // --- Validate New Password --- //
+        if (!NewPassword) {
+            return res.status(400).json({ message: "New password is required" });
+        }
+
+        if (NewPassword.length < 6) {
+            return res.status(400).json({ message: "New password must be at least 6 characters long" });
+        }
+
+        // --- Hash New Password --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        // --- Update Password --- //
+        existingReceptionist.Password = hashedPassword;
+        await existingReceptionist.save();
+
+        res.status(200).json({ message: "Pharmacist password updated", pharmacistDetails: existingReceptionist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};

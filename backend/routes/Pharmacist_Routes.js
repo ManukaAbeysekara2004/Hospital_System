@@ -17,4 +17,12 @@ router.get('/details/:pharmacistId', PharmacistController.Get_Pharmacist_Details
 // 05. Delete Pharmacist //
 router.delete('/delete/:pharmacistId', PharmacistController.Delete_Pharmacist);  
 
+// ------------------------ Update User ------------------------//
+
+// 06. Update phone Number //
+router.patch('/update-phone-number/:pharmacistId', PharmacistController.Update_Phone_Number);
+
+// 07. Update Password //
+router.patch('/update-password/:pharmacistId', PharmacistController.Update_Password);
+
 module.exports = router;

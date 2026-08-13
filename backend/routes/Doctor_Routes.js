@@ -29,4 +29,12 @@ router.get('/details/:doctorId', DoctorController.Get_Doctor_Details);
 // 09. Delete Doctor //
 router.delete('/delete/:doctorId', DoctorController.Delete_Doctor);
 
+// ------------------------ Update User ------------------------//
+
+// 10. Update Phone Number //
+router.patch('/update-phone-number/:doctorId', DoctorController.Update_Phone_Number);
+
+// 11. Update Password //
+router.patch('/update-password/:doctorId', DoctorController.Update_Password);
+
 module.exports = router;

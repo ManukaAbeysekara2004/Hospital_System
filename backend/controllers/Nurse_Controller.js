@@ -327,3 +327,79 @@ exports.Delete_Nurse = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };      
+
+// ------------------------ Update User ------------------------//
+
+// 09. Update Phone Number //
+//-------------------------//
+
+exports.Update_Phone_Number = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+        const { PhoneNumber } = req.body;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        // --- Validate Phone Number --- //
+        if (!PhoneNumber) {
+            return res.status(400).json({ message: "Phone number is required" });
+        }
+
+        // --- Update Phone Number --- //
+        existingNurse.PhoneNumber = PhoneNumber;
+        await existingNurse.save();
+
+        res.status(200).json({ message: "Nurse phone number updated", nurseDetails: existingNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 10. Update Password //
+//---------------------//
+
+exports.Update_Password = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+        const { OldPassword, NewPassword } = req.body;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        // --- Validate Old Password --- //
+        const isOldPasswordValid = await bcrypt.compare(OldPassword, existingNurse.Password);
+
+        if (!isOldPasswordValid) {
+            return res.status(400).json({ message: "Invalid old password" });
+        }
+
+        // --- Validate New Password --- //
+        if (!NewPassword) {
+            return res.status(400).json({ message: "New password is required" });
+        }
+
+        if (NewPassword.length < 6) {
+            return res.status(400).json({ message: "New password must be at least 6 characters long" });
+        }
+
+        // --- Hash New Password --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        // --- Update Password --- //
+        existingNurse.Password = hashedPassword;
+        await existingNurse.save();
+
+        res.status(200).json({ message: "Nurse password updated", nurseDetails: existingNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};

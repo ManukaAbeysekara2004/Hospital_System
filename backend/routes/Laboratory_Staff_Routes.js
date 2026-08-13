@@ -17,4 +17,12 @@ router.get('/details/:laboratoryStaffId', LaboratoryStaffController.Get_Laborato
 // 05. Delete Laboratory Staff //
 router.delete('/delete/:laboratoryStaffId', LaboratoryStaffController.Delete_Laboratory_Staff);
 
+// ------------------------ Update User ------------------------//
+
+// 06. Update Phone Number //
+router.patch('/update-phone-number/:laboratoryStaffId', LaboratoryStaffController.Update_Phone_Number);
+
+// 07. Update Password //
+router.patch('/update-password/:laboratoryStaffId', LaboratoryStaffController.Update_Password);
+
 module.exports = router;

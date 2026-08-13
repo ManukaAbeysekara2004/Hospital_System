@@ -14,4 +14,9 @@ router.get('/search-by-id/:PatientRegID', PatientController.Search_Patient_By_Pa
 // 04. Delete Patient //
 router.delete('/delete/:patientId', PatientController.Delete_Patient);  
 
+// ------------------------ Update User ------------------------//
+
+// 05. Update Contact Number //
+router.patch('/update-contact-number/:patientId', PatientController.Update_Contact_Number);
+
 module.exports = router;

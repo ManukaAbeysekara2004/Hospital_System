@@ -253,3 +253,84 @@ exports.Delete_Pharmacist = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };      
+
+
+// ------------------------ Update User ------------------------//
+
+// 06. Update phone Number //
+//-------------------------//
+
+exports.Update_Phone_Number = async (req, res) => {
+    try {
+        const { pharmacistId } = req.params;
+        const { PhoneNumber } = req.body;
+
+        // --- Check if Pharmacist exists --- //
+        const existingPharmacist = await pharmacist.findById(pharmacistId);
+
+        if (!existingPharmacist) {
+            return res.status(404).json({ message: "Pharmacist not found" });
+        }
+
+        // --- Validate Phone Number --- //
+        if (!PhoneNumber) {
+            return res.status(400).json({ message: "Phone number is required" });
+        }
+
+        if (!/^\d{10}$/.test(PhoneNumber)) {
+            return res.status(400).json({ message: "Phone Number must contain exactly 10 digits" });
+        }
+
+        // --- Update Phone Number --- //
+        existingPharmacist.PhoneNumber = PhoneNumber;
+        await existingPharmacist.save();
+
+        res.status(200).json({ message: "Pharmacist phone number updated", pharmacistDetails: existingPharmacist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 07. Update Password //
+//---------------------//
+
+exports.Update_Password = async (req, res) => {
+    try {
+        const { pharmacistId } = req.params;
+        const { OldPassword, NewPassword } = req.body;
+
+        // --- Check if Pharmacist exists --- //
+        const existingPharmacist = await pharmacist.findById(pharmacistId);
+
+        if (!existingPharmacist) {
+            return res.status(404).json({ message: "Pharmacist not found" });
+        }
+
+        // --- Validate Old Password --- //
+        const isOldPasswordValid = await bcrypt.compare(OldPassword, existingPharmacist.Password);
+
+        if (!isOldPasswordValid) {
+            return res.status(400).json({ message: "Invalid old password" });
+        }
+
+        // --- Validate New Password --- //
+        if (!NewPassword) {
+            return res.status(400).json({ message: "New password is required" });
+        }
+
+        if (NewPassword.length < 6) {
+            return res.status(400).json({ message: "New password must be at least 6 characters long" });
+        }
+
+        // --- Hash New Password --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        // --- Update Password --- //
+        existingPharmacist.Password = hashedPassword;
+        await existingPharmacist.save();
+
+        res.status(200).json({ message: "Pharmacist password updated", pharmacistDetails: existingPharmacist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};

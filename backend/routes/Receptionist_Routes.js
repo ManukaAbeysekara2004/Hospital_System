@@ -17,4 +17,12 @@ router.get('/details/:receptionistId', ReceptionistController.Get_Receptionist_D
 // 05. Delete Receptionist //
 router.delete('/delete/:receptionistId', ReceptionistController.Delete_Receptionist);
 
+// ------------------------ Update User ------------------------//
+
+// 06. Update Phone Number //
+router.patch('/update-phone/:receptionistId', ReceptionistController.Update_Phone_Number);
+
+// 07. Update Password //
+router.patch('/update-password/:receptionistId', ReceptionistController.Update_Password);
+
 module.exports = router;
