@@ -22,6 +22,11 @@ const medicineBillSchema = new mongoose.Schema({
 
     Added_Medicines: [
         {
+            MedicineID: {
+                type: String,
+                required: false,
+                ref: 'Medicine'
+            },
             MedicineName: {
                 type: String,
                 required: false,
@@ -34,6 +39,7 @@ const medicineBillSchema = new mongoose.Schema({
             Price: {
                 type: Number,
                 required: false,
+                default: 0,
                 min: 0
             },
             Added: {

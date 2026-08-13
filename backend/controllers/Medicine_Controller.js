@@ -23,17 +23,17 @@ const bcrypt = require('bcryptjs');
 
 exports.add_Medicine = async (req, res) => {
     try {
-        const { MedicineName, Quantity, Price } = req.body;
+        const { MedicineName, Quantity, UnitPrice } = req.body;
 
-        const medicine = new medicine({
+        const addMedicine = new medicine({
             MedicineName,
             Quantity,
-            Price
+            UnitPrice
         });
 
-        await medicine.save();
+        await addMedicine.save();
 
-        res.status(201).json({ message: "Medicine added successfully", medicine });
+        res.status(201).json({ message: "Medicine added successfully", addMedicine });
     } catch (error) {
         res.status(500).json({ message: "Failed to add medicine", error });
     }
@@ -48,17 +48,17 @@ exports.update_Medicine_Quantity = async (req, res) => {
         const { MedicineID } = req.params;
         const { Quantity } = req.body;
 
-        const medicine = await medicine.findOne({ MedicineID });
+        const updateMedicine = await medicine.findOne({ MedicineID });
 
-        if (!medicine) {
+        if (!updateMedicine) {
             return res.status(404).json({ message: "Medicine not found" });
         }
 
-        medicine.Quantity = Quantity;
+        updateMedicine.Quantity = Quantity;
 
-        await medicine.save();
+        await updateMedicine.save();
 
-        res.status(200).json({ message: "Medicine quantity updated successfully", medicine });
+        res.status(200).json({ message: "Medicine quantity updated successfully", updateMedicine });
     } catch (error) {
         res.status(500).json({ message: "Failed to update medicine quantity", error });
     }
@@ -73,17 +73,17 @@ exports.update_Medicine_UnitPrice = async (req, res) => {
         const { MedicineID } = req.params;
         const { UnitPrice } = req.body;
 
-        const medicine = await medicine.findOne({ MedicineID });
+        const updateMedicine = await medicine.findOne({ MedicineID });
 
-        if (!medicine) {
+        if (!updateMedicine) {
             return res.status(404).json({ message: "Medicine not found" });
         }
 
-        medicine.UnitPrice = UnitPrice;
+        updateMedicine.UnitPrice = UnitPrice;
 
-        await medicine.save();
+        await updateMedicine.save();
 
-        res.status(200).json({ message: "Medicine unit price updated successfully", medicine });
+        res.status(200).json({ message: "Medicine unit price updated successfully", updateMedicine });
     } catch (error) {
         res.status(500).json({ message: "Failed to update medicine unit price", error });
     }
@@ -97,13 +97,13 @@ exports.get_UnitPrice = async (req, res) => {
     try {
         const { MedicineID } = req.params;
 
-        const medicine = await medicine.findOne({ MedicineID });
+        const getUnitPrice = await medicine.findOne({ MedicineID });
 
-        if (!medicine) {
+        if (!getUnitPrice) {
             return res.status(404).json({ message: "Medicine not found" });
         }
 
-        res.status(200).json({ UnitPrice: medicine.UnitPrice });
+        res.status(200).json({ UnitPrice: getUnitPrice.UnitPrice });
     } catch (error) {
         res.status(500).json({ message: "Failed to get unit price", error });
     }
@@ -117,13 +117,13 @@ exports.get_Quantity = async (req, res) => {
     try {
         const { MedicineID } = req.params;
 
-        const medicine = await medicine.findOne({ MedicineID });
+        const getQuantity = await medicine.findOne({ MedicineID });
 
-        if (!medicine) {
+        if (!getQuantity) {
             return res.status(404).json({ message: "Medicine not found" });
         }
 
-        res.status(200).json({ Quantity: medicine.Quantity });
+        res.status(200).json({ Quantity: getQuantity.Quantity });
     } catch (error) {
         res.status(500).json({ message: "Failed to get quantity", error });
     }
@@ -137,13 +137,13 @@ exports.delete_Medicine = async (req, res) => {
     try {
         const { MedicineID } = req.params;
 
-        const medicine = await medicine.findOne({ MedicineID });
+        const deleteMedicine = await medicine.findOne({ MedicineID });
 
-        if (!medicine) {
+        if (!deleteMedicine) {
             return res.status(404).json({ message: "Medicine not found" });
         }
 
-        await medicine.deleteOne();
+        await deleteMedicine.deleteOne();
 
         res.status(200).json({ message: "Medicine deleted successfully" });
     } catch (error) {
@@ -157,13 +157,13 @@ exports.delete_Medicine = async (req, res) => {
 
 exports.get_All_Medicine_Details = async (req, res) => {
     try {
-        const medicines = await medicine.find();
+        const getAllMedicine = await medicine.find();
 
-        if (!medicines) {
+        if (!getAllMedicine) {
             return res.status(404).json({ message: "No medicines found" });
         }
 
-        res.status(200).json({ medicines });
+        res.status(200).json({ getAllMedicine });
     } catch (error) {
         res.status(500).json({ message: "Failed to get all medicine details", error });
     }
@@ -177,13 +177,13 @@ exports.get_Medicine_Details_by_TabletName = async (req, res) => {
     try {
         const { TabletName } = req.body;
 
-        const medicine = await medicine.findOne({ TabletName });
+        const getMedicineByTabletName = await medicine.findOne({ TabletName });
 
-        if (!medicine) {
+        if (!getMedicineByTabletName) {
             return res.status(404).json({ message: "Medicine not found" });
         }
 
-        res.status(200).json({ medicine });
+        res.status(200).json({ getMedicineByTabletName });
     } catch (error) {
         res.status(500).json({ message: "Failed to get medicine details", error });
     }
@@ -199,14 +199,14 @@ exports.create_Medicine_Bill = async (req, res) => {
     try {
         const { PatientID, DoctorID } = req.params;
 
-        const medicineBill = new medicineBill({
+        const createMedicineBill = new medicineBill({
             PatientID,
             DoctorID
         });
 
-        await medicineBill.save();
+        await createMedicineBill.save();
 
-        res.status(201).json({ message: "Medicine bill created successfully", medicineBill });
+        res.status(201).json({ message: "Medicine bill created successfully", createMedicineBill });
     } catch (error) {
         res.status(500).json({ message: "Failed to create medicine bill", error });
     }
@@ -220,13 +220,13 @@ exports.delete_Medicine_Bill = async (req, res) => {
     try {
         const { MedicineBillID } = req.params;
 
-        const medicineBill = await medicineBill.findOne({ _id: MedicineBillID });
+        const deleteMedicineBill = await medicineBill.findOne({ _id: MedicineBillID });
 
-        if (!medicineBill) {
+        if (!deleteMedicineBill) {
             return res.status(404).json({ message: "Medicine bill not found" });
         }
 
-        await medicineBill.deleteOne();
+        await deleteMedicineBill.deleteOne();
 
         res.status(200).json({ message: "Medicine bill deleted successfully" });
     } catch (error) {
@@ -243,101 +243,79 @@ exports.add_Medicine_to_Bill = async (req, res) => {
         const { MedicineBillID } = req.params;
         const { MedicineID, Quantity } = req.body;
 
-        const medicine = await medicine.findOne({ MedicineID });
+        const checkMedicine = await medicine.findById(MedicineID);
 
-        if (!medicine) {
+        if (!checkMedicine) {
             return res.status(404).json({ message: "Medicine not found" });
         }
 
-        if (medicine.Quantity < Quantity) {
-            return res.status(404).json({ message: "Medicine quantity is short" });
-        }
+        const checkMedicineBill = await medicineBill.findById(MedicineBillID);
 
-        const medicineBill = await medicineBill.findOne({ _id: MedicineBillID });
-
-        if (!medicineBill) {
+        if (!checkMedicineBill) {
             return res.status(404).json({ message: "Medicine bill not found" });
         }
 
-        medicineBill.Added_Medicines.push({
-            MedicineName: medicine.TabletName,
-            Quantity,
-            Price: medicine.UnitPrice * Quantity,
-            Added: true
-        });
+        if (Quantity < checkMedicine.Quantity) {
+            
+            checkMedicineBill.Added_Medicines.push({
+                MedicineID: MedicineID,
+                MedicineName: checkMedicine.TabletName,
+                Quantity: Quantity,
+                Price: checkMedicine.UnitPrice * Quantity,
+                Added: true
+            });
 
-        medicineBill.Total_Bill += medicine.UnitPrice * Quantity;
+            checkMedicine.Quantity = checkMedicine.Quantity - Quantity;
 
-        await medicineBill.save();
+            checkMedicineBill.Total_Bill = checkMedicineBill.Total_Bill + (checkMedicine.UnitPrice * Quantity);
 
-        res.status(200).json({ message: "Medicine added to bill successfully", medicineBill });
+        } else {
+
+            checkMedicineBill.Added_Medicines.push({
+                MedicineID: MedicineID,
+                MedicineName: checkMedicine.TabletName,
+                Quantity: Quantity,
+                Price: 0,
+                Added: false
+            });
+
+        }
+
+        await checkMedicine.save();
+        await checkMedicineBill.save();
+
+        res.status(200).json({ message: "Medicine added to bill successfully", checkMedicineBill });
     } catch (error) {
         res.status(500).json({ message: "Failed to add medicine to bill", error });
     }
 };
 
 
-// 12. If Medicine Quantity is Short Than Medicine_Bill Quantity //
-//---------------------------------------------------------------//
-
-exports.update_Medicine_Quantity_Short = async (req, res) => {
-    try {
-        const { MedicineBillID } = req.params;
-        const { MedicineID, Quantity } = req.body;
-
-        const medicine = await medicine.findOne({ MedicineID });
-
-        if (!medicine) {
-            return res.status(404).json({ message: "Medicine not found" });
-        }
-
-        const medicineBill = await medicineBill.findOne({ _id: MedicineBillID });
-
-        if (!medicineBill) {
-            return res.status(404).json({ message: "Medicine bill not found" });
-        }
-
-        medicineBill.Added_Medicines.push({
-            MedicineName: medicine.TabletName,
-            Quantity,
-            Price: 0,
-            Added: false
-        });
-
-        await medicineBill.save();
-
-        res.status(200).json({ message: "Medicine added to bill successfully", medicineBill });
-    } catch (error) {
-        res.status(500).json({ message: "Failed to add medicine to bill", error });
-    }
-};
-
-
-// 13. Update Complete Status //
+// 12. Update Complete Status //
 //----------------------------//
 
 exports.update_Complete_Status = async (req, res) => {
     try {
         const { MedicineBillID } = req.params;
 
-        const medicineBill = await medicineBill.findOne({ _id: MedicineBillID });
+        const updateMedicineBill = await medicineBill.findOne({ _id: MedicineBillID });
 
-        if (!medicineBill) {
+        if (!updateMedicineBill) {
             return res.status(404).json({ message: "Medicine bill not found" });
         }
 
-        medicineBill.CompleteStatus = true;
+        updateMedicineBill.CompleteStatus = true;
 
-        await medicineBill.save();
+        await updateMedicineBill.save();
 
-        res.status(200).json({ message: "Medicine bill updated successfully", medicineBill });
+        res.status(200).json({ message: "Medicine bill updated successfully", updateMedicineBill });
     } catch (error) {
         res.status(500).json({ message: "Failed to update medicine bill", error });
     }
 };
 
 
-// 14. Get All CompleteStatus True Medicine Bill with patient and Doctore Details //
+// 13. Get All CompleteStatus True Medicine Bill with patient and Doctore Details //
 //--------------------------------------------------------------------------------//
 
 exports.get_Complete_Status_True_Medicine_Bill = async (req, res) => {
@@ -364,7 +342,7 @@ exports.get_Complete_Status_True_Medicine_Bill = async (req, res) => {
 };
 
 
-// 15. Get All CompleteStatus False Medicine Bill with patient and Doctore Details //
+// 14. Get All CompleteStatus False Medicine Bill with patient and Doctore Details //
 //---------------------------------------------------------------------------------//
 
 exports.get_Complete_Status_False_Medicine_Bill = async (req, res) => {
@@ -391,22 +369,22 @@ exports.get_Complete_Status_False_Medicine_Bill = async (req, res) => {
 };
 
 
-// 16. Get All Medicine bills By DoctorID //
+// 15. Get All Medicine bills By DoctorID //
 //----------------------------------------//
 
 exports.get_Medicine_Bills_By_DoctorID = async (req, res) => {
     try {
         const { DoctorID } = req.params;
 
-        const medicineBills = await medicineBill.find({ DoctorID });
+        const getMedicineBillsByDoctorID = await medicineBill.find({ DoctorID });
 
-        if (!medicineBills) {
+        if (!getMedicineBillsByDoctorID) {
             return res.status(404).json({ message: "Medicine bills not found" });
         }
 
         res.status(200).json({ 
             message: "Medicine bills found successfully",
-            medicineBills
+            getMedicineBillsByDoctorID
          });
     } catch (error) {
         res.status(500).json({ message: "Failed to get all medicine bills", error });
@@ -414,22 +392,22 @@ exports.get_Medicine_Bills_By_DoctorID = async (req, res) => {
 };
 
 
-// 17. Get All Medicine bills By PatientID //
+// 16. Get All Medicine bills By PatientID //
 //-----------------------------------------//
 
 exports.get_Medicine_Bills_By_PatientID = async (req, res) => {
     try {
         const { PatientID } = req.params;
 
-        const medicineBills = await medicineBill.find({ PatientID });
+        const getMedicineBillsByPatientID = await medicineBill.find({ PatientID });
 
-        if (!medicineBills) {
+        if (!getMedicineBillsByPatientID) {
             return res.status(404).json({ message: "Medicine bills not found" });
         }
 
         res.status(200).json({ 
             message: "Medicine bills found successfully",
-            medicineBills
+            getMedicineBillsByPatientID
          });
     } catch (error) {
         res.status(500).json({ message: "Failed to get all medicine bills", error });

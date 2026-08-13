@@ -84,7 +84,7 @@ const paymentSchema = new mongoose.Schema({
     // --- Medicine Fee --- //
     Medicine_Fee: [
         {
-            MedicinID: {
+            MedicineBillID: {
                 type: String,
                 required: false,
                 ref: 'MedicineBill'

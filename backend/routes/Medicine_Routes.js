@@ -39,9 +39,6 @@ router.delete('/delete-medicine-bill/:MedicineBillID', MedicineController.delete
 // 11. Add Medicine to Bill //
 router.patch('/add-medicine-to-bill/:MedicineBillID', MedicineController.add_Medicine_to_Bill);
 
-// 12. Update Medicine Quantity Short //
-router.patch('/update-medicine-quantity-short/:MedicineBillID', MedicineController.update_Medicine_Quantity_Short);
-
 // 13. Update Complete Status //
 router.patch('/update-complete-status/:MedicineBillID', MedicineController.update_Complete_Status);
 

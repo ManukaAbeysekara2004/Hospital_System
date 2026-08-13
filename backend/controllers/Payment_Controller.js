@@ -76,7 +76,11 @@ exports.add_Appointment_Fee = async (req, res) => {
         }
 
         // --- Add Appointment Fee --- //
-        isPaymentExist.Appoinment_Fee.push({ AppointmentID, Appoinment_Fee: isAppointmentExist.Fee });
+        isPaymentExist.Appoinment_Fee.push({
+            AppointmentID: isAppointmentExist._id,
+            BillName: 'Appointment Fee',
+            Appoinment_Fee: isAppointmentExist.Fee
+        });
 
         await isPaymentExist.save();
 
@@ -162,7 +166,11 @@ exports.add_Blood_test_Fee = async (req, res) => {
         }
 
         // Add Blood Test Fee
-        isPaymentExist.Blood_test_Fee.push({ BloodTestID, BloodTestFee: isBloodTestExist.Fee });
+        isPaymentExist.Blood_test_Fee.push({ 
+            BloodTestID: isBloodTestExist._id, 
+            BillName: 'Blood Test',
+            BloodTestFee: isBloodTestExist.Fee 
+        });
 
         await isPaymentExist.save();
 
@@ -248,7 +256,11 @@ exports.add_Urine_test_Fee = async (req, res) => {
         }
 
         // Add Urine Test Fee
-        isPaymentExist.Urine_test_Fee.push({ UrineTestID, UrineTestFee: isUrineTestExist.Fee });
+        isPaymentExist.Urine_test_Fee.push({ 
+            UrineTestID: isUrineTestExist._id, 
+            BillName: 'Urine Test',
+            UrineTestFee: isUrineTestExist.Fee 
+        });
 
         await isPaymentExist.save();
 
@@ -339,7 +351,11 @@ exports.add_Medicine_Fee = async (req, res) => {
         }
 
         // Add Medicine Fee
-        isPaymentExist.Medicine_Fee.push({ MedicineBillID, MedicineBillPrice: isMedicineExist.Total_Bill });
+        isPaymentExist.Medicine_Fee.push({ 
+            MedicineBillID: isMedicineExist._id, 
+            BillName: 'Medicine Bill',
+            MedicinePrice: isMedicineExist.Total_Bill 
+        });
 
         await isPaymentExist.save();
 
@@ -411,6 +427,40 @@ exports.update_CompleteStatus = async (req, res) => {
         const isPaymentExist = await payment.findById(PaymentID);
         if (!isPaymentExist) {
             return res.status(404).json({ success: false, error: 'Payment Not Found' });
+        }
+
+        // --- Check Appointment Complete Status --- //
+        const appointmentStatus = await appointment.findOne({ PatientID: isPaymentExist.PatientID });
+        
+        if (appointmentStatus) {
+            if (!appointmentStatus.AppointmentStatus === 'Completed') {
+                return res.status(400).json({ success: false, error: 'Appointment Not Completed Yet' });
+            }
+        }
+
+        // --- Check Blood Test Complete Status --- //
+        const bloodTestStatus = await bloodTest.findOne({ PatientID: isPaymentExist.PatientID });
+        
+        if (bloodTestStatus) {
+            if (!bloodTestStatus.CompleteStatus) {
+                return res.status(400).json({ success: false, error: 'Blood Test Not Completed Yet' });
+            }
+        }
+
+        // --- Check Urine Test Complete Status --- //
+        const urineTestStatus = await urineTest.findOne({ PatientID: isPaymentExist.PatientID });
+        if (urineTestStatus) {
+            if (!urineTestStatus.CompleteStatus) {
+                return res.status(400).json({ success: false, error: 'Urine Test Not Completed Yet' });
+            }
+        }
+
+        // --- Check Medicine Bill Complete Status --- //
+        const medicineBillStatus = await medicineBill.findOne({ PatientID: isPaymentExist.PatientID });
+        if (medicineBillStatus) {
+            if (!medicineBillStatus.CompleteStatus) {
+                return res.status(400).json({ success: false, error: 'Medicine Bill Not Completed Yet' });
+            }
         }
 
         // Update CompleteStatus
