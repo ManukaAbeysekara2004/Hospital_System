@@ -13,6 +13,7 @@ const urineTest = require('../models/Urine_Test');
 const medicine = require('../models/Medicine');
 const medicineBill = require('../models/Medicine_Bill');
 const payment = require('../models/Payment');
+const billPrice = require('../models/Bill_Prices');
 const bcrypt = require('bcryptjs');
 
 // 01. Add Appointment //
@@ -22,6 +23,7 @@ exports.Add_Appointment = async (req, res) => {
     try {
 
         const { PatientID, DoctorID } = req.params;
+        const { BillPricesID } = req.body;
 
         // --- Check Patient ID --- //
         const existingPatient = await patient.findById(PatientID);
@@ -36,6 +38,14 @@ exports.Add_Appointment = async (req, res) => {
         if (!existingDoctor) {
             return res.status(404).json({
                 message: "Doctor not found"
+            });
+        }
+
+        // --- Check Bill ID --- //
+        const existingBillPrice = await billPrice.findById(BillPricesID);
+        if (!existingBillPrice) {
+            return res.status(404).json({
+                message: "Bill not found"
             });
         }
 
@@ -63,7 +73,8 @@ exports.Add_Appointment = async (req, res) => {
         // --- Create Appointment --- //
         const newAppointment = new appointment({
             PatientID,
-            DoctorID
+            DoctorID,
+            Fee: existingBillPrice.Appointment_Price
         });
 
         await newAppointment.save();

@@ -13,6 +13,7 @@ const urineTest = require('../models/Urine_Test');
 const medicine = require('../models/Medicine');
 const medicineBill = require('../models/Medicine_Bill');
 const payment = require('../models/Payment');
+const billPrice = require('../models/Bill_Prices');
 const bcrypt = require('bcryptjs');
 
 // ------------------------ Medicine ------------------------//

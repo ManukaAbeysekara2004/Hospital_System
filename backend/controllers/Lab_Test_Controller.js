@@ -13,6 +13,7 @@ const urineTest = require('../models/Urine_Test');
 const medicine = require('../models/Medicine');
 const medicineBill = require('../models/Medicine_Bill');
 const payment = require('../models/Payment');
+const billPrice = require('../models/Bill_Prices');
 const bcrypt = require('bcryptjs');
 
 // 01. Request for Blood Test //
@@ -133,7 +134,15 @@ exports.get_Complete_Status_True_Urine_Test = async (req, res) => {
 exports.fill_Blood_Test_Form = async (req, res) => {
     try {
         const { BloodTestID } = req.params;
-        const { Hemoglobin, WBC, RBC, Platelets, BloodSugar, BloodGroup, Remarks } = req.body;
+        const { Hemoglobin, WBC, RBC, Platelets, BloodSugar, BloodGroup, Remarks, BillPricesID } = req.body;
+
+        // --- Check Bill ID --- //
+        const existingBillPrice = await billPrice.findById(BillPricesID);
+        if (!existingBillPrice) {
+            return res.status(404).json({
+                message: "Bill not found"
+            });
+        }
 
         const Filled_Blood_Test = await bloodTest.findByIdAndUpdate(BloodTestID, {
             CompleteStatus: true,
@@ -143,7 +152,8 @@ exports.fill_Blood_Test_Form = async (req, res) => {
             Platelets,
             BloodSugar,
             BloodGroup,
-            Remarks
+            Remarks,
+            Fee: existingBillPrice.Blood_Test_Price
         }, { new: true });
 
         res.status(200).json({ success: true, data: Filled_Blood_Test });
@@ -158,7 +168,15 @@ exports.fill_Blood_Test_Form = async (req, res) => {
 exports.fill_Urine_Test_Form = async (req, res) => {
     try {
         const { UrineTestID } = req.params;
-        const { Color, Appearance, pH, SpecificGravity, Protein, Glucose, Remarks } = req.body;
+        const { Color, Appearance, pH, SpecificGravity, Protein, Glucose, Remarks, BillPricesID } = req.body;
+
+        // --- Check Bill ID --- //
+        const existingBillPrice = await billPrice.findById(BillPricesID);
+        if (!existingBillPrice) {
+            return res.status(404).json({
+                message: "Bill not found"
+            });
+        }
 
         const Filled_Urine_Test = await urineTest.findByIdAndUpdate(UrineTestID, {
             CompleteStatus: true,
@@ -168,7 +186,8 @@ exports.fill_Urine_Test_Form = async (req, res) => {
             SpecificGravity,
             Protein,
             Glucose,
-            Remarks
+            Remarks,
+            Fee: existingBillPrice.Urine_Test_Price
         }, { new: true });
 
         res.status(200).json({ success: true, data: Filled_Urine_Test });

@@ -15,7 +15,9 @@ router.get('/approve-status/:adminId', AdminController.Get_Admin_Approve_Status)
 router.get('/details/:adminId', AdminController.Get_Admin_Details);
 
 // 05. Delete Admin //
-router.delete('/delete/:adminId', AdminController.Delete_Admin);    
+router.delete('/delete/:adminId', AdminController.Delete_Admin);   
+
+// ------------------------ Admin Manage ------------------------//
 
 // 06. Get All Accountant Details //
 router.get('/get-all-accountant-details', AdminController.Get_All_Accountant_Details);
@@ -61,5 +63,19 @@ router.put('/update-pharmacist-approve-status/:pharmacistId', AdminController.Up
 
 // 20. Update Receptionist Approve Status //
 router.put('/update-receptionist-approve-status/:receptionistId', AdminController.Update_Receptionist_Approve_Status);
+
+// ------------------------ Bill Manage ------------------------//
+
+// 21. Get Bill Prices Details //
+router.get('/get-bill-prices-details', AdminController.Get_All_Bill_Prices_Details);
+
+// 22. Update Appointment_Price //
+router.put('/update-appointment-price/:billPriceId', AdminController.Update_Appointment_Price);
+
+// 23. Update Blood_Test_Price //
+router.put('/update-blood-test-price/:billPriceId', AdminController.Update_Blood_Test_Price);
+
+// 24. Update Urine_Test_Price //
+router.put('/update-urine-test-price/:billPriceId', AdminController.Update_Urine_Test_Price);
 
 module.exports = router;

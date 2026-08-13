@@ -13,6 +13,7 @@ const urineTest = require('../models/Urine_Test');
 const medicine = require('../models/Medicine');
 const medicineBill = require('../models/Medicine_Bill');
 const payment = require('../models/Payment');
+const billPrice = require('../models/Bill_Prices');
 const bcrypt = require('bcryptjs');
 
 // 01. Admin Registration //
@@ -553,6 +554,104 @@ exports.Update_Receptionist_Approve_Status = async (req, res) => {
         await existingReceptionist.save();
 
         res.status(200).json({ message: "Receptionist Approve Status Updated", existingReceptionist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// ------------------------ Bill Manage ------------------------//
+
+// 21. Get Bill Prices Details //
+//-----------------------------//
+
+exports.Get_All_Bill_Prices_Details = async (req, res) => {
+    try {
+        const allBillPrices = await billPrice.find();
+
+        if (allBillPrices.length === 0) {
+            return res.status(404).json({ message: "No Bill Prices Found" });
+        }
+
+        res.status(200).json({ message: "All Bill Prices Details Retrieved", allBillPrices });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 22. Update Appointment_Price //
+//------------------------------//
+
+exports.Update_Appointment_Price = async (req, res) => {
+    try {
+        const { billPriceId } = req.params;
+        const { Appointment_Price } = req.body;
+
+        // --- Check if Bill Price exists --- //
+        const existingBillPrice = await billPrice.findById(billPriceId);
+
+        if (!existingBillPrice) {
+            return res.status(404).json({ message: "Bill Price not found" });
+        }
+
+        // --- Update Bill Price --- //
+        existingBillPrice.Appointment_Price = Appointment_Price;
+        await existingBillPrice.save();
+
+        res.status(200).json({ message: "Bill Price Updated", existingBillPrice });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 23. Update Blood_Test_Price //
+//-----------------------------//
+
+exports.Update_Blood_Test_Price = async (req, res) => {
+    try {
+        const { billPriceId } = req.params;
+        const { Blood_Test_Price } = req.body;
+
+        // --- Check if Bill Price exists --- //
+        const existingBillPrice = await billPrice.findById(billPriceId);
+
+        if (!existingBillPrice) {
+            return res.status(404).json({ message: "Bill Price not found" });
+        }
+
+        // --- Update Bill Price --- //
+        existingBillPrice.Blood_Test_Price = Blood_Test_Price;
+        await existingBillPrice.save();
+
+        res.status(200).json({ message: "Bill Price Updated", existingBillPrice });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 24. Update Urine_Test_Price //
+//-----------------------------//
+
+exports.Update_Urine_Test_Price = async (req, res) => {
+    try {
+        const { billPriceId } = req.params;
+        const { Urine_Test_Price } = req.body;
+
+        // --- Check if Bill Price exists --- //
+        const existingBillPrice = await billPrice.findById(billPriceId);
+
+        if (!existingBillPrice) {
+            return res.status(404).json({ message: "Bill Price not found" });
+        }
+
+        // --- Update Bill Price --- //
+        existingBillPrice.Urine_Test_Price = Urine_Test_Price;
+        await existingBillPrice.save();
+
+        res.status(200).json({ message: "Bill Price Updated", existingBillPrice });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
