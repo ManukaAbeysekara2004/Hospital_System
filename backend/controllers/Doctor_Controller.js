@@ -29,20 +29,19 @@ exports.Doctor_Registration = async (req, res) => {
             NICPassportNumber,
             PhoneNumber,
             Address,
-            ProfilePhoto,
             MedicalLicenseNumber,
             Specialization,
             Qualifications,
             YearsOfExperience,
             Department,
+            RoomNumber,
             Email,
-            Password,
-            RoomNumber
+            Password
         } = req.body;
 
-        
+
         // --- Check NIC / Passport Number --- //
-        
+
         const existingNIC = await doctor.findOne({ NICPassportNumber });
 
         if (existingNIC) {
@@ -52,7 +51,7 @@ exports.Doctor_Registration = async (req, res) => {
         }
 
         // --- Check Medical License Number --- //
-        
+
         const existingLicense = await doctor.findOne({
             MedicalLicenseNumber
         });
@@ -64,7 +63,7 @@ exports.Doctor_Registration = async (req, res) => {
         }
 
         // --- Validate Phone Number --- //
-        
+
         if (!/^\d{10}$/.test(PhoneNumber)) {
             return res.status(400).json({
                 message: "Phone Number must contain exactly 10 digits"
@@ -137,12 +136,12 @@ exports.Doctor_Registration = async (req, res) => {
             NICPassportNumber,
             PhoneNumber,
             Address,
-            ProfilePhoto,
             MedicalLicenseNumber,
             Specialization,
             Qualifications,
             YearsOfExperience,
             Department,
+            RoomNumber,
             Email,
             Password: hashedPassword,
 
@@ -152,9 +151,8 @@ exports.Doctor_Registration = async (req, res) => {
             InHospitalAvailability: false,
             StopAppointments: false,
 
-            // Number of Appointments and Room Number 
-            NoOfAppointments: 0,
-            RoomNumber: RoomNumber
+            // Number of Appointments
+            NoOfAppointments: 0
         });
 
         await newDoctor.save();
@@ -198,7 +196,7 @@ exports.Doctor_Login = async (req, res) => {
 
         // --- Check if Doctor is Approved --- //
         if (!existingDoctor.Approve) {
-            return res.status(403).json({ message: "Doctor account is not approved yet" });
+            return res.status(403).json({ message: "Your account has not been approved yet" });
         }
 
         // --- Change Availability to True --- //
@@ -341,7 +339,7 @@ exports.Get_Doctor_Details = async (req, res) => {
         }
 
         res.status(200).json({ message: "Doctor details retrieved successfully", doctorDetails: existingDoctor });
-    } catch (error) {  
+    } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
@@ -367,7 +365,7 @@ exports.Delete_Doctor = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
-};  
+};
 
 // ------------------------ Update User ------------------------//
 

@@ -29,11 +29,6 @@ const doctorSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    ProfilePhoto: {
-        type: String,
-        required: false,
-        default: null,
-    },
 
     // Stage 2: Professional Information
 
@@ -61,6 +56,11 @@ const doctorSchema = new mongoose.Schema({
     Department: {
         type: String,
         required: true,
+    },
+    RoomNumber: {  
+        type: String,
+        required: false,
+        unique: true,
     },
 
     // Stage 3: Account Setup
@@ -101,17 +101,12 @@ const doctorSchema = new mongoose.Schema({
         required: true,
     },
 
-    // Number of appointments And Room Number
+    // Number of appointments 
 
     NoOfAppointments: {
         type: Number,
         default: 0,
         required: true,
-    },
-    RoomNumber: {  
-        type: String,
-        required: false,
-        unique: true,
     },
 
 }, { timestamps: true });

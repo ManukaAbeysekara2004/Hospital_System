@@ -334,6 +334,18 @@ exports.Delete_Appointment = async (req, res) => {
             });
         }
 
+        // --- Decrement Number of Appointments --- //
+        
+        const existingDoctor = await doctor.findById(existingAppointment.DoctorID);
+        if (!existingDoctor) {
+            return res.status(404).json({
+                message: "Doctor not found"
+            });
+        }
+
+        existingDoctor.NoOfAppointments -= 1;
+        await existingDoctor.save();
+
         await existingAppointment.deleteOne();
 
         res.status(200).json({
@@ -401,7 +413,7 @@ exports.Get_All_Appointments_By_Doctor_ID = async (req, res) => {
         }
 
         // --- Get Doctor Name and Contact Details --- //
-        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber");
+        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber RoomNumber");
 
         // --- Get Patient Details --- //
         const existingPatient = await patient.findById(existingAppointment.PatientID);
@@ -439,7 +451,7 @@ exports.Get_All_Appointments_By_Patient_ID = async (req, res) => {
         }
 
         // --- Get Doctor Name and Contact Details --- //
-        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber");
+        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber RoomNumber");
 
         // --- Get Patient Details --- //
         const existingPatient = await patient.findById(existingAppointment.PatientID);
@@ -477,7 +489,7 @@ exports.Get_All_Appointments_By_Date = async (req, res) => {
         }
 
         // --- Get Doctor Name and Contact Details --- //
-        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber");
+        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber RoomNumber");
 
         // --- Get Patient Details --- //
         const existingPatient = await patient.findById(existingAppointment.PatientID);
@@ -516,7 +528,7 @@ exports.Get_Appointment_Details = async (req, res) => {
         }
 
         // --- Get Doctor Name and Contact Details --- //
-        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber");
+        const existingDoctor = await doctor.findById(existingAppointment.DoctorID).select("FullName PhoneNumber RoomNumber");
 
         // --- Get Patient Details --- //
         const existingPatient = await patient.findById(existingAppointment.PatientID);

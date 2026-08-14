@@ -172,6 +172,11 @@ exports.Receptionist_Login = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        // --- Check Approve Status --- //
+        if (existingReceptionist.Approve === false) {
+            return res.status(403).json({ message: "Your account has not been approved yet" });
+        }
+
         res.status(200).json({ message: "Login successful", existingReceptionist });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });

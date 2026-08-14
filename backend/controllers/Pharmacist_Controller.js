@@ -183,6 +183,11 @@ exports.Pharmacist_Login = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
+        // --- Check Approve Status --- //
+        if (existingPharmacist.Approve === false) {
+            return res.status(403).json({ message: "Your account has not been approved yet" });
+        }
+
         res.status(200).json({ message: "Login successful", existingPharmacist });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
