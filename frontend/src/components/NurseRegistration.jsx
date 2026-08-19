@@ -40,10 +40,10 @@ export default function NurseRegistration({ onBackToRoles, onBackToLogin }) {
 
   // Stage 2: Professional Information
   const [nursingLicenseNumber, setNursingLicenseNumber] = useState('');
-  const [qualificationsList, setQualificationsList] = useState(['B.Sc Nursing', 'Registered Nurse (RN)']);
+  const [qualificationsList, setQualificationsList] = useState([]);
   const [qualificationInput, setQualificationInput] = useState('');
-  const [assignedWard, setAssignedWard] = useState('ICU Ward 3');
-  const [designation, setDesignation] = useState('Senior Staff Nurse');
+  const [assignedWard, setAssignedWard] = useState('');
+  const [designation, setDesignation] = useState('');
   const [employeeID, setEmployeeID] = useState('');
 
   // Stage 3: Account Setup
@@ -119,6 +119,14 @@ export default function NurseRegistration({ onBackToRoles, onBackToLogin }) {
     }
     if (qualificationsList.length === 0) {
       setErrorMessage('Please add at least one professional qualification.');
+      return;
+    }
+    if (!assignedWard.trim()) {
+      setErrorMessage('Please enter your Assigned Ward.');
+      return;
+    }
+    if (!designation.trim()) {
+      setErrorMessage('Please enter your Designation.');
       return;
     }
     if (!employeeID.trim()) {
@@ -443,17 +451,15 @@ export default function NurseRegistration({ onBackToRoles, onBackToLogin }) {
                   <label className="input-label" htmlFor="assignedWard">Assigned Ward</label>
                   <div className="input-field-wrapper">
                     <Building className="input-icon" size={18} />
-                    <select
+                    <input
                       id="assignedWard"
+                      type="text"
                       className="input-field"
+                      placeholder="e.g. ICU Ward 3"
                       value={assignedWard}
                       onChange={(e) => setAssignedWard(e.target.value)}
-                    >
-                      <option value="ICU Ward 3">ICU Ward 3</option>
-                      <option value="Pediatric Ward 1">Pediatric Ward 1</option>
-                      <option value="Surgical High Dependency Unit">Surgical High Dependency Unit</option>
-                      <option value="Cardiology Ward 2">Cardiology Ward 2</option>
-                    </select>
+                      required
+                    />
                   </div>
                 </div>
 
@@ -504,19 +510,25 @@ export default function NurseRegistration({ onBackToRoles, onBackToLogin }) {
                 </div>
 
                 <div className="qual-tags-container">
-                  {qualificationsList.map((qual, idx) => (
-                    <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
-                      {qual}
-                      <button
-                        type="button"
-                        className="remove-qual-btn"
-                        onClick={() => handleRemoveQualification(idx)}
-                        title="Remove qualification"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
+                  {qualificationsList.length === 0 ? (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '4px 0' }}>
+                      No qualifications added yet. Type a qualification above and click Add.
+                    </div>
+                  ) : (
+                    qualificationsList.map((qual, idx) => (
+                      <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
+                        {qual}
+                        <button
+                          type="button"
+                          className="remove-qual-btn"
+                          onClick={() => handleRemoveQualification(idx)}
+                          title="Remove qualification"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -619,8 +631,8 @@ export default function NurseRegistration({ onBackToRoles, onBackToLogin }) {
                 </div>
                 <div>• Name: <strong style={{ color: 'var(--text-main)' }}>{fullName || 'N/A'}</strong> ({gender})</div>
                 <div>• DOB: <strong style={{ color: 'var(--text-main)' }}>{dobYear}-{dobMonth}-{dobDay}</strong> | Phone: <strong style={{ color: 'var(--text-main)' }}>{phoneNumber || 'N/A'}</strong></div>
-                <div>• License: <strong style={{ color: '#0284c7' }}>{nursingLicenseNumber || 'N/A'}</strong> | Ward: <strong style={{ color: 'var(--text-main)' }}>{assignedWard}</strong></div>
-                <div>• Designation: <strong style={{ color: 'var(--text-main)' }}>{designation}</strong></div>
+                <div>• License: <strong style={{ color: '#0284c7' }}>{nursingLicenseNumber || 'N/A'}</strong> | Ward: <strong style={{ color: 'var(--text-main)' }}>{assignedWard || 'N/A'}</strong></div>
+                <div>• Designation: <strong style={{ color: 'var(--text-main)' }}>{designation || 'N/A'}</strong></div>
               </div>
 
               <div style={{ display: 'flex', gap: '14px', marginTop: '14px' }}>

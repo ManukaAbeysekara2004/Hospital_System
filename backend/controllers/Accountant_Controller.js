@@ -185,8 +185,25 @@ exports.Accountant_Login = async (req, res) => {
     }
 };
 
+// 03. Get All Accountant Details //
+//--------------------------------//
 
-// 03. Get Accountant Approve Status //
+exports.Get_All_Accountant_Details = async (req, res) => {
+    try {
+        const allAccountant = await accountant.find();
+
+        if (allAccountant.length === 0) {
+            return res.status(404).json({ message: "No Accountant Found" });
+        }
+
+        res.status(200).json({ message: "All Accountant Details Retrieved", allAccountant });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 04. Get Accountant Approve Status //
 //-----------------------------------//
 
 exports.Get_Approve_Status = async (req, res) => {
@@ -207,7 +224,7 @@ exports.Get_Approve_Status = async (req, res) => {
 };
 
 
-// 04. Get Accountant Details //
+// 05. Get Accountant Details //
 //----------------------------//
 
 exports.Get_Accountant_Details = async (req, res) => {
@@ -228,12 +245,12 @@ exports.Get_Accountant_Details = async (req, res) => {
 };
 
 
-// 05. Delete Accountant //
+// 06. Delete Accountant //
 //-----------------------//
 
 exports.Delete_Accountant = async (req, res) => {
     try {
-        const { accountantId } = req.params;
+        const { accountantId, Password } = req.params;
 
         // --- Check if Accountant exists --- //
         const existingAccountant = await accountant.findById(accountantId);
@@ -241,6 +258,15 @@ exports.Delete_Accountant = async (req, res) => {
         if (!existingAccountant) {
             return res.status(404).json({ message: "Accountant not found" });
         }
+
+        // --- Validate Password --- //
+        const isMatch = await bcrypt.compare(Password, existingAccountant.Password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        // --- Delete Accountant --- //
 
         await existingAccountant.deleteOne();
 
@@ -253,7 +279,7 @@ exports.Delete_Accountant = async (req, res) => {
 
 // ------------------------ Update User ------------------------//
 
-// 06. Update Contact Number //
+// 07. Update Contact Number //
 //---------------------------//
 
 exports.Update_Contact_Number = async (req, res) => {
@@ -286,7 +312,7 @@ exports.Update_Contact_Number = async (req, res) => {
 };
 
 
-// 07. Update Password //
+// 08. Update Password //
 //---------------------//
 
 exports.Update_Password = async (req, res) => {

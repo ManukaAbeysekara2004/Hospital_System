@@ -40,10 +40,11 @@ export default function PharmacistRegistration({ onBackToRoles, onBackToLogin })
 
   // Stage 2: Professional Information
   const [pharmacyLicenseNumber, setPharmacyLicenseNumber] = useState('');
-  const [qualificationsList, setQualificationsList] = useState(['B.Pharm', 'Registered Pharmacist']);
+  const [employeeID, setEmployeeID] = useState('');
+  const [qualificationsList, setQualificationsList] = useState([]);
   const [qualificationInput, setQualificationInput] = useState('');
-  const [assignedPharmacy, setAssignedPharmacy] = useState('Main Outpatient Pharmacy');
-  const [licenseExpiryDate, setLicenseExpiryDate] = useState('2030-12-31');
+  const [assignedPharmacy, setAssignedPharmacy] = useState('');
+  const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
 
   // Stage 3: Account Setup
   const [email, setEmail] = useState('');
@@ -116,8 +117,20 @@ export default function PharmacistRegistration({ onBackToRoles, onBackToLogin })
       setErrorMessage('Please enter your Pharmacy License Number.');
       return;
     }
+    if (!employeeID.trim()) {
+      setErrorMessage('Please enter your Employee ID.');
+      return;
+    }
+    if (!assignedPharmacy.trim()) {
+      setErrorMessage('Please enter your Assigned Pharmacy Unit.');
+      return;
+    }
     if (qualificationsList.length === 0) {
       setErrorMessage('Please add at least one professional qualification.');
+      return;
+    }
+    if (!licenseExpiryDate) {
+      setErrorMessage('Please select your License Expiry Date.');
       return;
     }
 
@@ -161,6 +174,7 @@ export default function PharmacistRegistration({ onBackToRoles, onBackToLogin })
       PhoneNumber: phoneNumber.trim(),
       Address: address.trim(),
       PharmacyLicenseNumber: pharmacyLicenseNumber.trim(),
+      EmployeeID: employeeID.trim(),
       Qualifications: formattedQualifications,
       AssignedPharmacy: assignedPharmacy.trim(),
       LicenseExpiryDate: licenseExpiryDate,
@@ -416,20 +430,70 @@ export default function PharmacistRegistration({ onBackToRoles, onBackToLogin })
                 </div>
 
                 <div className="input-group">
+                  <label className="input-label" htmlFor="pharmEmpID">Employee ID</label>
+                  <div className="input-field-wrapper">
+                    <Building className="input-icon" size={18} />
+                    <input
+                      id="pharmEmpID"
+                      type="text"
+                      className="input-field"
+                      placeholder="e.g. PHM-201"
+                      value={employeeID}
+                      onChange={(e) => setEmployeeID(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="input-group">
                   <label className="input-label" htmlFor="assignedPharm">Assigned Pharmacy Unit</label>
                   <div className="input-field-wrapper">
                     <Building className="input-icon" size={18} />
-                    <select
+                    <input
                       id="assignedPharm"
+                      type="text"
                       className="input-field"
+                      placeholder="e.g. Main Outpatient Pharmacy"
                       value={assignedPharmacy}
                       onChange={(e) => setAssignedPharmacy(e.target.value)}
-                    >
-                      <option value="Main Outpatient Pharmacy">Main Outpatient Pharmacy</option>
-                      <option value="Inpatient Ward Pharmacy">Inpatient Ward Pharmacy</option>
-                      <option value="Emergency Counter Pharmacy">Emergency Counter Pharmacy</option>
-                      <option value="ICU Special Medication Unit">ICU Special Medication Unit</option>
-                    </select>
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" htmlFor="pharmExpiry">License Expiry Date</label>
+                  <div
+                    className="input-field-wrapper"
+                    onClick={(e) => {
+                      const dateInput = e.currentTarget.querySelector('input[type="date"]');
+                      if (dateInput && dateInput.showPicker) {
+                        try {
+                          dateInput.showPicker();
+                        } catch (err) {}
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <Calendar className="input-icon" size={18} style={{ color: '#0284c7', opacity: 1, zIndex: 2 }} />
+                    <input
+                      id="pharmExpiry"
+                      type="date"
+                      className="input-field"
+                      style={{ cursor: 'pointer' }}
+                      value={licenseExpiryDate}
+                      onChange={(e) => setLicenseExpiryDate(e.target.value)}
+                      onClick={(e) => {
+                        if (e.target.showPicker) {
+                          try {
+                            e.target.showPicker();
+                          } catch (err) {}
+                        }
+                      }}
+                      required
+                    />
                   </div>
                 </div>
               </div>
@@ -464,34 +528,25 @@ export default function PharmacistRegistration({ onBackToRoles, onBackToLogin })
                 </div>
 
                 <div className="qual-tags-container">
-                  {qualificationsList.map((qual, idx) => (
-                    <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
-                      {qual}
-                      <button
-                        type="button"
-                        className="remove-qual-btn"
-                        onClick={() => handleRemoveQualification(idx)}
-                        title="Remove qualification"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="input-group">
-                <label className="input-label" htmlFor="pharmExpiry">License Expiry Date</label>
-                <div className="input-field-wrapper">
-                  <Calendar className="input-icon" size={18} />
-                  <input
-                    id="pharmExpiry"
-                    type="date"
-                    className="input-field"
-                    value={licenseExpiryDate}
-                    onChange={(e) => setLicenseExpiryDate(e.target.value)}
-                    required
-                  />
+                  {qualificationsList.length === 0 ? (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '4px 0' }}>
+                      No qualifications added yet. Type a qualification above and click Add.
+                    </div>
+                  ) : (
+                    qualificationsList.map((qual, idx) => (
+                      <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
+                        {qual}
+                        <button
+                          type="button"
+                          className="remove-qual-btn"
+                          onClick={() => handleRemoveQualification(idx)}
+                          title="Remove qualification"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -594,8 +649,9 @@ export default function PharmacistRegistration({ onBackToRoles, onBackToLogin })
                 </div>
                 <div>• Name: <strong style={{ color: 'var(--text-main)' }}>{fullName || 'N/A'}</strong> ({gender})</div>
                 <div>• DOB: <strong style={{ color: 'var(--text-main)' }}>{dobYear}-{dobMonth}-{dobDay}</strong> | Phone: <strong style={{ color: 'var(--text-main)' }}>{phoneNumber || 'N/A'}</strong></div>
-                <div>• License: <strong style={{ color: '#0284c7' }}>{pharmacyLicenseNumber || 'N/A'}</strong> | Unit: <strong style={{ color: 'var(--text-main)' }}>{assignedPharmacy}</strong></div>
-                <div>• Qualifications: <strong style={{ color: 'var(--text-main)' }}>{qualificationsList.join(', ')}</strong></div>
+                <div>• License: <strong style={{ color: '#0284c7' }}>{pharmacyLicenseNumber || 'N/A'}</strong> | Emp ID: <strong style={{ color: 'var(--text-main)' }}>{employeeID || 'N/A'}</strong></div>
+                <div>• Unit: <strong style={{ color: 'var(--text-main)' }}>{assignedPharmacy || 'N/A'}</strong></div>
+                <div>• Qualifications: <strong style={{ color: 'var(--text-main)' }}>{qualificationsList.length > 0 ? qualificationsList.join(', ') : 'None added'}</strong></div>
               </div>
 
               <div style={{ display: 'flex', gap: '14px', marginTop: '14px' }}>

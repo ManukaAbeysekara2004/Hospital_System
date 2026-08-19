@@ -225,38 +225,7 @@ exports.Get_All_Inprogress_Appointments = async (req, res) => {
 }
 
 
-// 06. Get All Waiting For Result Appointments //
-//---------------------------------------------//
-
-exports.Get_All_Waiting_For_Result_Appointments = async (req, res) => {
-    try {
-
-        // --- Get All Waiting For Result Appointments --- //
-        const allWaitingForResultAppointments = await appointment.find({ AppointmentStatus: "Waiting For Result" });
-
-        // --- Get Doctor Name and Contact Details --- //
-        const existingDoctor = await doctor.findById(allWaitingForResultAppointments.DoctorID).select("FullName PhoneNumber");
-
-        // --- Get Patient Details --- //
-        const existingPatient = await patient.findById(allWaitingForResultAppointments.PatientID);
-
-        res.status(200).json({
-            message: "All waiting for result appointments",
-            allWaitingForResultAppointments,
-            existingDoctor,
-            existingPatient,
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            message: "Server Error",
-            error: error.message
-        });
-    }
-}
-
-
-// 07. Get All Completed Appointments //
+// 06. Get All Completed Appointments //
 //---------------------------------//
 
 exports.Get_All_Completed_Appointments = async (req, res) => {
@@ -287,7 +256,7 @@ exports.Get_All_Completed_Appointments = async (req, res) => {
 }
 
 
-// 08. Get All Cancelled Appointments //
+// 07. Get All Cancelled Appointments //
 //------------------------------------//
 
 exports.Get_All_Cancelled_Appointments = async (req, res) => {
@@ -318,7 +287,7 @@ exports.Get_All_Cancelled_Appointments = async (req, res) => {
 }
 
 
-// 09. Delete Appointment //
+// 08. Delete Appointment //
 //------------------------//
 
 exports.Delete_Appointment = async (req, res) => {
@@ -361,7 +330,7 @@ exports.Delete_Appointment = async (req, res) => {
 }
 
 
-// 10. Update Doctor Notes //
+// 09. Update Doctor Notes //
 //------------------------//
 
 exports.Update_Doctor_Notes = async (req, res) => {
@@ -396,7 +365,7 @@ exports.Update_Doctor_Notes = async (req, res) => {
 }
 
 
-// 11. Get All Appointments By Doctor ID //
+// 10. Get All Appointments By Doctor ID //
 //--------------------------------------//
 
 exports.Get_All_Appointments_By_Doctor_ID = async (req, res) => {
@@ -434,7 +403,7 @@ exports.Get_All_Appointments_By_Doctor_ID = async (req, res) => {
 }
 
 
-// 12. Get All Appointments By Patient ID //
+// 11. Get All Appointments By Patient ID //
 //----------------------------------------//
 
 exports.Get_All_Appointments_By_Patient_ID = async (req, res) => {
@@ -472,7 +441,7 @@ exports.Get_All_Appointments_By_Patient_ID = async (req, res) => {
 }
 
 
-// 13. Get All Appointments By Date //
+// 12. Get All Appointments By Date //
 //---------------------------------//
 
 exports.Get_All_Appointments_By_Date = async (req, res) => {
@@ -510,7 +479,7 @@ exports.Get_All_Appointments_By_Date = async (req, res) => {
 }
 
 
-// 14. Get Appointment Details with doctor and patient details //
+// 13. Get Appointment Details with doctor and patient details //
 //-------------------------------------------------------------//
 
 exports.Get_Appointment_Details = async (req, res) => {

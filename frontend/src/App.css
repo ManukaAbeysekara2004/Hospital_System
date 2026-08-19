@@ -1356,14 +1356,57 @@
   color: #dc2626;
 }
 
-/* Right Main Content Area */
+/* Right Main Content Area (Fixed Shell, Non-Scrolling Outer Container) */
 .dash-main-content {
   flex: 1;
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 24px 32px;
-  gap: 24px;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.dash-top-header,
+.dash-hero-banner,
+.dash-search-toolbar {
+  flex-shrink: 0;
+}
+
+/* Patient Details Outer Section */
+.dash-patient-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.dash-patient-section-header {
+  flex-shrink: 0;
+}
+
+/* Scrollable Table Container for Patient Rows */
+.dash-table-container {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+}
+
+/* Sticky Table Topics (Headers remain fixed while rows scroll) */
+.dash-table-container table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-card);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Top Header Navbar */
@@ -1495,8 +1538,8 @@
 }
 
 .dash-action-btn-primary {
-  background: #2dd4bf;
-  color: #0b1320;
+  background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+  color: #ffffff;
   border: none;
   padding: 10px 18px;
   border-radius: 10px;
@@ -1506,12 +1549,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 15px rgba(45, 212, 191, 0.35);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
   transition: all 0.2s ease;
 }
 
 .dash-action-btn-primary:hover {
-  background: #14b8a6;
+  background: linear-gradient(135deg, #0f766e 0%, #0369a1 100%);
 }
 
 .dash-action-btn-secondary {
@@ -1531,6 +1574,157 @@
 
 .dash-action-btn-secondary:hover {
   background: rgba(255, 255, 255, 0.22);
+}
+
+/* Receptionist Search Toolbar & Controls */
+.dash-search-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 16px 24px;
+  box-shadow: var(--shadow-card);
+  margin-top: 4px;
+}
+
+.dash-toolbar-left-space {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-search-center-group {
+  flex: 0 1 560px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.dash-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0 16px;
+  flex: 1;
+  transition: all 0.2s ease;
+}
+
+.dash-search-input-wrapper:focus-within {
+  border-color: var(--teal-400);
+  box-shadow: 0 0 0 3.5px rgba(45, 212, 191, 0.18);
+}
+
+[data-theme='light'] .dash-search-input-wrapper:focus-within {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3.5px rgba(2, 132, 199, 0.18);
+}
+
+.dash-search-icon {
+  color: var(--teal-400);
+  flex-shrink: 0;
+}
+
+[data-theme='light'] .dash-search-icon {
+  color: #0284c7;
+}
+
+.dash-search-input {
+  width: 100%;
+  padding: 12px 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+}
+
+.dash-search-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.dash-search-btn {
+  background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+  color: #ffffff;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.dash-search-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.5);
+  background: linear-gradient(135deg, #0f766e 0%, #0369a1 100%);
+}
+
+.dash-toolbar-right-group {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dash-add-patient-btn {
+  background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+  color: #ffffff;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.dash-add-patient-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.5);
+  background: linear-gradient(135deg, #0f766e 0%, #0369a1 100%);
+}
+
+@media (max-width: 900px) {
+  .dash-search-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dash-toolbar-left-space {
+    display: none;
+  }
+
+  .dash-search-center-group {
+    max-width: 100%;
+  }
+
+  .dash-toolbar-right-group {
+    justify-content: stretch;
+  }
+
+  .dash-add-patient-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* Stat Cards Grid */
@@ -1601,4 +1795,53 @@
   align-items: center;
   justify: center;
   flex-shrink: 0;
+}
+
+/* ===================================================
+   CUSTOM THEMED SCROLLBARS FOR DARK & LIGHT MODES
+   =================================================== */
+
+/* Firefox Scrollbar Styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 212, 191, 0.45) rgba(15, 23, 42, 0.6);
+}
+
+[data-theme='light'] * {
+  scrollbar-color: #0284c7 #e2e8f0;
+}
+
+/* Webkit (Chrome, Edge, Safari) Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #0d9488 0%, #0284c7 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2dd4bf 0%, #38bdf8 100%);
+}
+
+/* Light Mode Custom Scrollbar Overrides */
+[data-theme='light'] ::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #0284c7 0%, #0d9488 100%);
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #0369a1 0%, #0f766e 100%);
 }

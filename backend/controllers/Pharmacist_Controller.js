@@ -195,7 +195,25 @@ exports.Pharmacist_Login = async (req, res) => {
 };
 
 
-// 03. Get Pharmacist Approve Status //
+// 03. Get All Pharmacist Details //
+//--------------------------------//
+
+exports.Get_All_Pharmacist_Details = async (req, res) => {
+    try {
+        const allPharmacist = await pharmacist.find();
+
+        if (allPharmacist.length === 0) {
+            return res.status(404).json({ message: "No Pharmacist Found" });
+        }
+
+        res.status(200).json({ message: "All Pharmacist Details Retrieved", allPharmacist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 04. Get Pharmacist Approve Status //
 //-----------------------------------//
 
 exports.Get_Pharmacist_Approve_Status = async (req, res) => {
@@ -216,7 +234,7 @@ exports.Get_Pharmacist_Approve_Status = async (req, res) => {
 };
 
 
-// 04. Get pharmacist details //
+// 05. Get pharmacist details //
 //----------------------------//
 
 exports.Get_Pharmacist_Details = async (req, res) => {
@@ -237,12 +255,12 @@ exports.Get_Pharmacist_Details = async (req, res) => {
 };
 
 
-// 05. Delete Pharmacist //
+// 06. Delete Pharmacist //
 //-----------------------//
 
 exports.Delete_Pharmacist = async (req, res) => {
     try {
-        const { pharmacistId } = req.params;
+        const { pharmacistId, Password } = req.params;
 
         // --- Check if Pharmacist exists --- //
         const existingPharmacist = await pharmacist.findById(pharmacistId);
@@ -251,18 +269,26 @@ exports.Delete_Pharmacist = async (req, res) => {
             return res.status(404).json({ message: "Pharmacist not found" });
         }
 
+        // --- Validate Password -- //
+        const isMatch = await bcrypt.compare(Password, existingPharmacist.Password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        // --- Delete Pharmacist -- //
         await existingPharmacist.deleteOne();
 
         res.status(200).json({ message: "Pharmacist deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
-};      
+};
 
 
 // ------------------------ Update User ------------------------//
 
-// 06. Update phone Number //
+// 07. Update phone Number //
 //-------------------------//
 
 exports.Update_Phone_Number = async (req, res) => {
@@ -296,7 +322,7 @@ exports.Update_Phone_Number = async (req, res) => {
     }
 };
 
-// 07. Update Password //
+// 08. Update Password //
 //---------------------//
 
 exports.Update_Password = async (req, res) => {

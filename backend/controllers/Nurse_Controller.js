@@ -195,6 +195,10 @@ exports.Nurse_Login = async (req, res) => {
             return res.status(403).json({ message: "Your account has not been approved yet" });
         }
 
+        // --- Update Nurse Status to In Hospital Availability ---
+        existingNurse.InHospitalAvailability = true;
+        await existingNurse.save();
+
         res.status(200).json({ message: "Login successful", existingNurse });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
@@ -227,7 +231,25 @@ exports.Nurse_Logout = async (req, res) => {
 };
 
 
-// 04. Get Nurse Approve Status //
+// 04. Get All Nurse Details //
+//---------------------------//
+
+exports.Get_All_Nurse_Details = async (req, res) => {
+    try {
+        const allNurse = await nurse.find();
+
+        if (allNurse.length === 0) {
+            return res.status(404).json({ message: "No Nurse Found" });
+        }
+
+        res.status(200).json({ message: "All Nurse Details Retrieved", allNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 05. Get Nurse Approve Status //
 //------------------------------//
 
 exports.Get_Nurse_Approve_Status = async (req, res) => {
@@ -248,7 +270,7 @@ exports.Get_Nurse_Approve_Status = async (req, res) => {
 };
 
 
-// 05. Get Is Nurse In Hospital Availability Status //
+// 06. Get Is Nurse In Hospital Availability Status //
 //--------------------------------------------------//
 
 exports.Get_Nurse_InHospital_Availability_Status = async (req, res) => {
@@ -269,7 +291,7 @@ exports.Get_Nurse_InHospital_Availability_Status = async (req, res) => {
 };
 
 
-// 06. Get Is Nurse In Work Status //
+// 07. Get Is Nurse In Work Status //
 //---------------------------------//
 
 exports.Get_Nurse_InWork_Status = async (req, res) => {
@@ -290,7 +312,7 @@ exports.Get_Nurse_InWork_Status = async (req, res) => {
 };
 
 
-// 07. Get Nurse Details //
+// 08. Get Nurse Details //
 //-----------------------//
 
 exports.Get_Nurse_Details = async (req, res) => {
@@ -311,12 +333,12 @@ exports.Get_Nurse_Details = async (req, res) => {
 };
 
 
-// 08. Delete Nurse //
+// 09. Delete Nurse //
 //------------------//
 
 exports.Delete_Nurse = async (req, res) => {
     try {
-        const { nurseId } = req.params;
+        const { nurseId, Password } = req.params;
 
         // --- Check if Nurse exists --- //
         const existingNurse = await nurse.findById(nurseId);
@@ -324,6 +346,15 @@ exports.Delete_Nurse = async (req, res) => {
         if (!existingNurse) {
             return res.status(404).json({ message: "Nurse not found" });
         }
+
+        // --- Validate Password --- //
+        const isMatch = await bcrypt.compare(Password, existingNurse.Password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        // --- Delete Nurse --- //
 
         await existingNurse.deleteOne();
 
@@ -335,7 +366,7 @@ exports.Delete_Nurse = async (req, res) => {
 
 // ------------------------ Update User ------------------------//
 
-// 09. Update Phone Number //
+// 10. Update Phone Number //
 //-------------------------//
 
 exports.Update_Phone_Number = async (req, res) => {
@@ -365,7 +396,7 @@ exports.Update_Phone_Number = async (req, res) => {
     }
 };
 
-// 10. Update Password //
+// 11. Update Password //
 //---------------------//
 
 exports.Update_Password = async (req, res) => {

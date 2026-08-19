@@ -41,10 +41,11 @@ export default function LabStaffRegistration({ onBackToRoles, onBackToLogin }) {
 
   // Stage 2: Professional & Laboratory Information
   const [laboratoryLicenseNumber, setLaboratoryLicenseNumber] = useState('');
-  const [qualificationsList, setQualificationsList] = useState(['B.Sc Medical Laboratory Science', 'MLT Certified']);
+  const [employeeID, setEmployeeID] = useState('');
+  const [qualificationsList, setQualificationsList] = useState([]);
   const [qualificationInput, setQualificationInput] = useState('');
-  const [assignedLaboratoryUnit, setAssignedLaboratoryUnit] = useState('Pathology & Hematology Unit');
-  const [labSpecialization, setLabSpecialization] = useState('Biochemistry & Blood Diagnostics');
+  const [assignedLaboratoryUnit, setAssignedLaboratoryUnit] = useState('');
+  const [labSpecialization, setLabSpecialization] = useState('');
 
   // Stage 3: Account Setup
   const [email, setEmail] = useState('');
@@ -117,6 +118,18 @@ export default function LabStaffRegistration({ onBackToRoles, onBackToLogin }) {
       setErrorMessage('Please enter your Laboratory License Number.');
       return;
     }
+    if (!employeeID.trim()) {
+      setErrorMessage('Please enter your Employee ID.');
+      return;
+    }
+    if (!assignedLaboratoryUnit.trim()) {
+      setErrorMessage('Please enter your Assigned Laboratory Unit.');
+      return;
+    }
+    if (!labSpecialization.trim()) {
+      setErrorMessage('Please enter your Lab Specialization.');
+      return;
+    }
     if (qualificationsList.length === 0) {
       setErrorMessage('Please add at least one professional qualification.');
       return;
@@ -162,6 +175,7 @@ export default function LabStaffRegistration({ onBackToRoles, onBackToLogin }) {
       PhoneNumber: phoneNumber.trim(),
       Address: address.trim(),
       LaboratoryLicenseNumber: laboratoryLicenseNumber.trim(),
+      EmployeeID: employeeID.trim(),
       Qualifications: formattedQualifications,
       AssignedLaboratoryUnit: assignedLaboratoryUnit.trim(),
       LabSpecialization: labSpecialization.trim(),
@@ -417,37 +431,53 @@ export default function LabStaffRegistration({ onBackToRoles, onBackToLogin }) {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label" htmlFor="assignedLabUnit">Assigned Laboratory Unit</label>
+                  <label className="input-label" htmlFor="labEmpID">Employee ID</label>
                   <div className="input-field-wrapper">
                     <Building className="input-icon" size={18} />
-                    <select
-                      id="assignedLabUnit"
+                    <input
+                      id="labEmpID"
+                      type="text"
                       className="input-field"
-                      value={assignedLaboratoryUnit}
-                      onChange={(e) => setAssignedLaboratoryUnit(e.target.value)}
-                    >
-                      <option value="Pathology & Hematology Unit">Pathology & Hematology Unit</option>
-                      <option value="Microbiology & Culture Lab">Microbiology & Culture Lab</option>
-                      <option value="Biochemistry & Metabolic Unit">Biochemistry & Metabolic Unit</option>
-                      <option value="Histopathology & Tissue Diagnostics">Histopathology & Tissue Diagnostics</option>
-                    </select>
+                      placeholder="e.g. LAB-301"
+                      value={employeeID}
+                      onChange={(e) => setEmployeeID(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className="input-group">
-                <label className="input-label" htmlFor="labSpec">Lab Specialization</label>
-                <div className="input-field-wrapper">
-                  <FlaskConical className="input-icon" size={18} />
-                  <input
-                    id="labSpec"
-                    type="text"
-                    className="input-field"
-                    placeholder="e.g. Hematology & Blood Pathology"
-                    value={labSpecialization}
-                    onChange={(e) => setLabSpecialization(e.target.value)}
-                    required
-                  />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="input-group">
+                  <label className="input-label" htmlFor="assignedLabUnit">Assigned Laboratory Unit</label>
+                  <div className="input-field-wrapper">
+                    <Building className="input-icon" size={18} />
+                    <input
+                      id="assignedLabUnit"
+                      type="text"
+                      className="input-field"
+                      placeholder="e.g. Pathology & Hematology Unit"
+                      value={assignedLaboratoryUnit}
+                      onChange={(e) => setAssignedLaboratoryUnit(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" htmlFor="labSpec">Lab Specialization</label>
+                  <div className="input-field-wrapper">
+                    <FlaskConical className="input-icon" size={18} />
+                    <input
+                      id="labSpec"
+                      type="text"
+                      className="input-field"
+                      placeholder="e.g. Hematology & Blood Pathology"
+                      value={labSpecialization}
+                      onChange={(e) => setLabSpecialization(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -481,19 +511,25 @@ export default function LabStaffRegistration({ onBackToRoles, onBackToLogin }) {
                 </div>
 
                 <div className="qual-tags-container">
-                  {qualificationsList.map((qual, idx) => (
-                    <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
-                      {qual}
-                      <button
-                        type="button"
-                        className="remove-qual-btn"
-                        onClick={() => handleRemoveQualification(idx)}
-                        title="Remove qualification"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
+                  {qualificationsList.length === 0 ? (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '4px 0' }}>
+                      No qualifications added yet. Type a qualification above and click Add.
+                    </div>
+                  ) : (
+                    qualificationsList.map((qual, idx) => (
+                      <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
+                        {qual}
+                        <button
+                          type="button"
+                          className="remove-qual-btn"
+                          onClick={() => handleRemoveQualification(idx)}
+                          title="Remove qualification"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -596,8 +632,9 @@ export default function LabStaffRegistration({ onBackToRoles, onBackToLogin }) {
                 </div>
                 <div>• Name: <strong style={{ color: 'var(--text-main)' }}>{fullName || 'N/A'}</strong> ({gender})</div>
                 <div>• DOB: <strong style={{ color: 'var(--text-main)' }}>{dobYear}-{dobMonth}-{dobDay}</strong> | Phone: <strong style={{ color: 'var(--text-main)' }}>{phoneNumber || 'N/A'}</strong></div>
-                <div>• License: <strong style={{ color: '#0284c7' }}>{laboratoryLicenseNumber || 'N/A'}</strong> | Unit: <strong style={{ color: 'var(--text-main)' }}>{assignedLaboratoryUnit}</strong></div>
-                <div>• Specialization: <strong style={{ color: 'var(--text-main)' }}>{labSpecialization}</strong></div>
+                <div>• License: <strong style={{ color: '#0284c7' }}>{laboratoryLicenseNumber || 'N/A'}</strong> | Emp ID: <strong style={{ color: 'var(--text-main)' }}>{employeeID || 'N/A'}</strong></div>
+                <div>• Unit: <strong style={{ color: 'var(--text-main)' }}>{assignedLaboratoryUnit || 'N/A'}</strong> | Specialization: <strong style={{ color: 'var(--text-main)' }}>{labSpecialization || 'N/A'}</strong></div>
+                <div>• Qualifications: <strong style={{ color: 'var(--text-main)' }}>{qualificationsList.length > 0 ? qualificationsList.join(', ') : 'None added'}</strong></div>
               </div>
 
               <div style={{ display: 'flex', gap: '14px', marginTop: '14px' }}>

@@ -3,7 +3,6 @@ import {
   Pill,
   LogOut,
   Package,
-  AlertCircle,
   Clock,
   Sun,
   Moon,
@@ -204,83 +203,6 @@ export default function PharmacistDashboard({ user, onLogout, theme, onToggleThe
               <FileText size={16} />
               Rx Logs
             </button>
-          </div>
-        </div>
-
-        {/* 6 Metric Stat Cards Grid */}
-        <div className="dash-stats-grid">
-          {/* Card 1 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>DISPENSED TODAY</span>
-              <h3>64</h3>
-              <p>
-                Prescriptions Fulfilled <strong style={{ color: '#10b981', marginLeft: 'auto' }}>↑ 15%</strong>
-              </p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(45, 212, 191, 0.15)', color: '#2dd4bf' }}>
-              <Pill size={24} />
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>MEDICINE ITEMS</span>
-              <h3>1,240</h3>
-              <p>In Pharmacy Stock</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-              <Package size={24} />
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>E-PRESCRIPTIONS</span>
-              <h3>9</h3>
-              <p>Pending In Queue</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-              <Clock size={24} />
-            </div>
-          </div>
-
-          {/* Card 4 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>STOCK ALERTS</span>
-              <h3>5</h3>
-              <p>Low Stock Reorder Alerts</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
-              <AlertCircle size={24} />
-            </div>
-          </div>
-
-          {/* Card 5 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>ACTIVE REFILLS</span>
-              <h3>18</h3>
-              <p>Patient Refill Orders</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7' }}>
-              <Pill size={24} />
-            </div>
-          </div>
-
-          {/* Card 6 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>LICENSE STATUS</span>
-              <h3>Verified</h3>
-              <p>Authorized Specialist</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(13, 148, 136, 0.15)', color: '#0d9488' }}>
-              <Package size={24} />
-            </div>
           </div>
         </div>
       </main>

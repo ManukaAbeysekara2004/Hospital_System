@@ -11,30 +11,33 @@ router.post('/login', DoctorController.Doctor_Login);
 // 03. Doctor Logout //
 router.patch('/logout/:doctorId', DoctorController.Doctor_Logout);
 
-// 04. Get Doctor Approve Status //
+// 04. Get All Doctor Details //
+router.get('/get-all-doctor-details', DoctorController.Get_All_Doctor_Details);
+
+// 05. Get Doctor Approve Status //
 router.get('/approve-status/:doctorId', DoctorController.Get_Doctor_Approve_Status);
 
-// 05. Get Doctor is In-Hospital Availability Status //
+// 06. Get Doctor is In-Hospital Availability Status //
 router.get('/in-hospital-availability/:doctorId', DoctorController.Get_Doctor_InHospital_Availability_Status);
 
-// 06. Get Doctor Stop Appointments Status //
+// 07. Get Doctor Stop Appointments Status //
 router.get('/stop-appointments/:doctorId', DoctorController.Get_Doctor_Stop_Appointments_Status);
 
-// 07. Update Doctor stop Appoinment Status //
+// 08. Update Doctor stop Appoinment Status //
 router.patch('/stop-appointments/:doctorId', DoctorController.Update_Doctor_Stop_Appointments_Status);
 
-// 08. Get Doctor Details //
+// 09. Get Doctor Details //
 router.get('/details/:doctorId', DoctorController.Get_Doctor_Details);
 
-// 09. Delete Doctor //
+// 10. Delete Doctor //
 router.delete('/delete/:doctorId', DoctorController.Delete_Doctor);
 
 // ------------------------ Update User ------------------------//
 
-// 10. Update Phone Number //
+// 11. Update Phone Number //
 router.patch('/update-phone-number/:doctorId', DoctorController.Update_Phone_Number);
 
-// 11. Update Password //
+// 12. Update Password //
 router.patch('/update-password/:doctorId', DoctorController.Update_Password);
 
 module.exports = router;

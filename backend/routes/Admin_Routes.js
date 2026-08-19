@@ -17,73 +17,78 @@ router.get('/details/:adminId', AdminController.Get_Admin_Details);
 // 05. Delete Admin //
 router.delete('/delete/:adminId', AdminController.Delete_Admin);   
 
-// ------------------------ Admin Manage ------------------------//
-
-// 06. Get All Accountant Details //
-router.get('/get-all-accountant-details', AdminController.Get_All_Accountant_Details);
-
-// 07. Get All Admin Details //
+// 06. Get All Admin Details //
 router.get('/get-all-admin-details', AdminController.Get_All_Admin_Details);
 
-// 08. Get All Doctor Details //
-router.get('/get-all-doctor-details', AdminController.Get_All_Doctor_Details);
+// ------------------------ Update Approve Status ------------------------ //
 
-// 09. Get All Lab Staff Details //
-router.get('/get-all-lab-staff-details', AdminController.Get_All_Lab_Staff_Details);
-
-// 10. Get All Nurse Details //
-router.get('/get-all-nurse-details', AdminController.Get_All_Nurse_Details);
-
-// 11. Get All Patient Details //
-router.get('/get-all-patient-details', AdminController.Get_All_Patient_Details);
-
-// 12. Get All Pharmacist Details //
-router.get('/get-all-pharmacist-details', AdminController.Get_All_Pharmacist_Details);
-
-// 13. Get All Receptionist Details //
-router.get('/get-all-receptionist-details', AdminController.Get_All_Receptionist_Details);
-
-// 14. Update Accountant Approve Status //
+// 07. Update Accountant Approve Status //
 router.put('/update-accountant-approve-status/:accountantId', AdminController.Update_Accountant_Approve_Status);
 
-// 15. Update Admin Approve Status //
+// 08. Update Admin Approve Status //
 router.put('/update-admin-approve-status/:adminId', AdminController.Update_Admin_Approve_Status);
 
-// 16. Update Doctor Approve Status //
+// 09. Update Doctor Approve Status //
 router.put('/update-doctor-approve-status/:doctorId', AdminController.Update_Doctor_Approve_Status);
 
-// 17. Update Lab Staff Approve Status //
+// 10. Update Lab Staff Approve Status //
 router.put('/update-lab-staff-approve-status/:labStaffId', AdminController.Update_Lab_Staff_Approve_Status);
 
-// 18. Update Nurse Approve Status //
+// 11. Update Nurse Approve Status //
 router.put('/update-nurse-approve-status/:nurseId', AdminController.Update_Nurse_Approve_Status);
 
-// 19. Update Pharmacist Approve Status //
+// 12. Update Pharmacist Approve Status //
 router.put('/update-pharmacist-approve-status/:pharmacistId', AdminController.Update_Pharmacist_Approve_Status);
 
-// 20. Update Receptionist Approve Status //
+// 13. Update Receptionist Approve Status //
 router.put('/update-receptionist-approve-status/:receptionistId', AdminController.Update_Receptionist_Approve_Status);
 
 // ------------------------ Bill Manage ------------------------//
 
-// 21. Get Bill Prices Details //
+// 14. Get Bill Prices Details //
 router.get('/get-bill-prices-details', AdminController.Get_All_Bill_Prices_Details);
 
-// 22. Update Appointment_Price //
+// 15. Update Appointment_Price //
 router.put('/update-appointment-price/:billPriceId', AdminController.Update_Appointment_Price);
 
-// 23. Update Blood_Test_Price //
+// 16. Update Blood_Test_Price //
 router.put('/update-blood-test-price/:billPriceId', AdminController.Update_Blood_Test_Price);
 
-// 24. Update Urine_Test_Price //
+// 17. Update Urine_Test_Price //
 router.put('/update-urine-test-price/:billPriceId', AdminController.Update_Urine_Test_Price);
+
+// 18. Create Bill Price //
+router.post('/create-bill-price', AdminController.Create_Bill_Price);
 
 // ------------------------ Update User ------------------------//
 
-// 25. Update Phone Number //
+// 19. Update Phone Number //
 router.patch('/update-phone-number/:adminId', AdminController.Update_Phone_Number);
 
-// 26. Update Password //
+// 20. Update Password //
 router.patch('/update-password/:adminId', AdminController.Update_Password);
+
+// ------------------------ Delete User ------------------------//
+
+// 21. Delete Accountant //
+router.delete('/delete-accountant/:accountantId', AdminController.Admin_Delete_Accountant);
+
+// 22. Delete Admin //
+router.delete('/delete-admin/:adminId', AdminController.Admin_Delete_Admin);
+
+// 23. Delete Doctor //
+router.delete('/delete-doctor/:doctorId', AdminController.Admin_Delete_Doctor);
+
+// 24. Delete Lab Staff //
+router.delete('/delete-lab-staff/:labStaffId', AdminController.Admin_Delete_Lab_Staff);
+
+// 25. Delete Nurse //
+router.delete('/delete-nurse/:nurseId', AdminController.Admin_Delete_Nurse);
+
+// 26. Delete Pharmacist //
+router.delete('/delete-pharmacist/:pharmacistId', AdminController.Admin_Delete_Pharmacist);
+
+// 27. Delete Receptionist //
+router.delete('/delete-receptionist/:receptionistId', AdminController.Admin_Delete_Receptionist);
 
 module.exports = router;

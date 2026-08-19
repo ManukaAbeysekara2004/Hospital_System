@@ -42,6 +42,23 @@ export default function NurseDashboard({ user, onLogout, theme, onToggleTheme })
       .toUpperCase();
   };
 
+  const handleLogoutClick = async () => {
+    const nurseId = user?._id || user?.id;
+    if (nurseId) {
+      try {
+        await fetch(`http://localhost:5000/api/nurse/logout/${nurseId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (err) {
+        console.error('Error executing Nurse_Logout:', err);
+      }
+    }
+    onLogout();
+  };
+
   return (
     <div className="dash-layout-container">
       {/* Left Sidebar */}
@@ -105,7 +122,7 @@ export default function NurseDashboard({ user, onLogout, theme, onToggleTheme })
             </div>
           </div>
 
-          <button className="dash-logout-btn" onClick={onLogout}>
+          <button className="dash-logout-btn" onClick={handleLogoutClick}>
             <LogOut size={16} />
             Logout
           </button>
@@ -203,83 +220,6 @@ export default function NurseDashboard({ user, onLogout, theme, onToggleTheme })
               <ClipboardCheck size={16} />
               Shift Notes
             </button>
-          </div>
-        </div>
-
-        {/* 6 Metric Stat Cards Grid */}
-        <div className="dash-stats-grid">
-          {/* Card 1 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>AVAILABLE BEDS</span>
-              <h3>42 / 65</h3>
-              <p>ICU & Ward 24</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(45, 212, 191, 0.15)', color: '#2dd4bf' }}>
-              <Bed size={24} />
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>OCCUPIED BEDS</span>
-              <h3>28 / 30</h3>
-              <p>Ward 3 Occupancy</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-              <Bed size={24} />
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>PATIENT VITALS</span>
-              <h3>28</h3>
-              <p>
-                Checked Today <strong style={{ color: '#10b981', marginLeft: 'auto' }}>↑ 12%</strong>
-              </p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7' }}>
-              <Activity size={24} />
-            </div>
-          </div>
-
-          {/* Card 4 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>MEDICATIONS DUE</span>
-              <h3>4</h3>
-              <p>Pending Dose Schedule</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-              <Clock size={24} />
-            </div>
-          </div>
-
-          {/* Card 5 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>TRIAGE NOTES</span>
-              <h3>16</h3>
-              <p>Logged This Shift</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(13, 148, 136, 0.15)', color: '#0d9488' }}>
-              <ClipboardCheck size={24} />
-            </div>
-          </div>
-
-          {/* Card 6 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>INPATIENTS ACTIVE</span>
-              <h3>30</h3>
-              <p>Under Nursing Care</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6' }}>
-              <HeartPulse size={24} />
-            </div>
           </div>
         </div>
       </main>

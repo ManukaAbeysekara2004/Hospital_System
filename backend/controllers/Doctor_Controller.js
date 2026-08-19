@@ -235,7 +235,25 @@ exports.Doctor_Logout = async (req, res) => {
 };
 
 
-// 04. Get Doctor Approve Status //
+// 04. Get All Doctor Details //
+//----------------------------//
+
+exports.Get_All_Doctor_Details = async (req, res) => {
+    try {
+        const allDoctor = await doctor.find();
+
+        if (allDoctor.length === 0) {
+            return res.status(404).json({ message: "No Doctor Found" });
+        }
+
+        res.status(200).json({ message: "All Doctor Details Retrieved", allDoctor });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 05. Get Doctor Approve Status //
 //-------------------------------//
 
 exports.Get_Doctor_Approve_Status = async (req, res) => {
@@ -256,7 +274,7 @@ exports.Get_Doctor_Approve_Status = async (req, res) => {
 };
 
 
-// 05. Get Doctor is In-Hospital Availability Status //
+// 06. Get Doctor is In-Hospital Availability Status //
 //---------------------------------------------------//
 
 exports.Get_Doctor_InHospital_Availability_Status = async (req, res) => {
@@ -277,7 +295,7 @@ exports.Get_Doctor_InHospital_Availability_Status = async (req, res) => {
 };
 
 
-// 06. Get Doctor Stop Appointments Status //
+// 07. Get Doctor Stop Appointments Status //
 //-----------------------------------------//
 
 exports.Get_Doctor_Stop_Appointments_Status = async (req, res) => {
@@ -298,7 +316,7 @@ exports.Get_Doctor_Stop_Appointments_Status = async (req, res) => {
 };
 
 
-// 07. Update Doctor stop Appoinment Status //
+// 08. Update Doctor stop Appoinment Status //
 //------------------------------------------//
 
 exports.Update_Doctor_Stop_Appointments_Status = async (req, res) => {
@@ -324,7 +342,7 @@ exports.Update_Doctor_Stop_Appointments_Status = async (req, res) => {
 };
 
 
-// 08. Get Doctor Details //
+// 09. Get Doctor Details //
 //------------------------//
 
 exports.Get_Doctor_Details = async (req, res) => {
@@ -345,12 +363,12 @@ exports.Get_Doctor_Details = async (req, res) => {
 };
 
 
-// 09. Delete Doctor //
+// 10. Delete Doctor //
 //-------------------//
 
 exports.Delete_Doctor = async (req, res) => {
     try {
-        const { doctorId } = req.params;
+        const { doctorId, Password } = req.params;
 
         // --- Check if Doctor exists --- //
         const existingDoctor = await doctor.findById(doctorId);
@@ -359,6 +377,14 @@ exports.Delete_Doctor = async (req, res) => {
             return res.status(404).json({ message: "Doctor not found" });
         }
 
+        // --- Validate Password --- //
+        const isMatch = await bcrypt.compare(Password, existingDoctor.Password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        // --- Delete Doctor --- //
         await existingDoctor.deleteOne();
 
         res.status(200).json({ message: "Doctor deleted successfully" });
@@ -369,7 +395,7 @@ exports.Delete_Doctor = async (req, res) => {
 
 // ------------------------ Update User ------------------------//
 
-// 10. Update Phone Number //
+// 11. Update Phone Number //
 //-------------------------//
 
 exports.Update_Phone_Number = async (req, res) => {
@@ -394,7 +420,7 @@ exports.Update_Phone_Number = async (req, res) => {
     }
 };
 
-// 11. Update Password //
+// 12. Update Password //
 //---------------------//
 
 exports.Update_Password = async (req, res) => {

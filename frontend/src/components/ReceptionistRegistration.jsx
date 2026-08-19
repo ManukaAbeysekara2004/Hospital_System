@@ -40,8 +40,8 @@ export default function ReceptionistRegistration({ onBackToRoles, onBackToLogin 
 
   // Stage 2: Receptionist Information
   const [employeeID, setEmployeeID] = useState('');
-  const [assignedDeskCounter, setAssignedDeskCounter] = useState('Counter 01 - Main OPD Desk');
-  const [languagesList, setLanguagesList] = useState(['English', 'Sinhala']);
+  const [assignedDeskCounter, setAssignedDeskCounter] = useState('');
+  const [languagesList, setLanguagesList] = useState([]);
   const [languageInput, setLanguageInput] = useState('');
 
   // Stage 3: Account Setup
@@ -116,7 +116,11 @@ export default function ReceptionistRegistration({ onBackToRoles, onBackToLogin 
       return;
     }
     if (!assignedDeskCounter.trim()) {
-      setErrorMessage('Please select or specify your Assigned Desk Counter.');
+      setErrorMessage('Please enter your Assigned Desk Counter.');
+      return;
+    }
+    if (languagesList.length === 0) {
+      setErrorMessage('Please add at least one spoken language.');
       return;
     }
 
@@ -417,17 +421,15 @@ export default function ReceptionistRegistration({ onBackToRoles, onBackToLogin 
                   <label className="input-label" htmlFor="recCounter">Assigned Desk Counter</label>
                   <div className="input-field-wrapper">
                     <ClipboardList className="input-icon" size={18} />
-                    <select
+                    <input
                       id="recCounter"
+                      type="text"
                       className="input-field"
+                      placeholder="e.g. Counter 01 - Main OPD Desk"
                       value={assignedDeskCounter}
                       onChange={(e) => setAssignedDeskCounter(e.target.value)}
-                    >
-                      <option value="Counter 01 - Main OPD Desk">Counter 01 - Main OPD Desk</option>
-                      <option value="Counter 02 - Emergency Intake">Counter 02 - Emergency Intake</option>
-                      <option value="Counter 03 - Specialist Consultations">Counter 03 - Specialist Consultations</option>
-                      <option value="Counter 04 - Inpatient Admissions">Counter 04 - Inpatient Admissions</option>
-                    </select>
+                      required
+                    />
                   </div>
                 </div>
               </div>
@@ -462,19 +464,25 @@ export default function ReceptionistRegistration({ onBackToRoles, onBackToLogin 
                 </div>
 
                 <div className="qual-tags-container">
-                  {languagesList.map((lang, idx) => (
-                    <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
-                      {lang}
-                      <button
-                        type="button"
-                        className="remove-qual-btn"
-                        onClick={() => handleRemoveLanguage(idx)}
-                        title="Remove language"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
+                  {languagesList.length === 0 ? (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '4px 0' }}>
+                      No spoken languages added yet. Type a language above and click Add.
+                    </div>
+                  ) : (
+                    languagesList.map((lang, idx) => (
+                      <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
+                        {lang}
+                        <button
+                          type="button"
+                          className="remove-qual-btn"
+                          onClick={() => handleRemoveLanguage(idx)}
+                          title="Remove language"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -577,8 +585,8 @@ export default function ReceptionistRegistration({ onBackToRoles, onBackToLogin 
                 </div>
                 <div>• Name: <strong style={{ color: 'var(--text-main)' }}>{fullName || 'N/A'}</strong> ({gender})</div>
                 <div>• DOB: <strong style={{ color: 'var(--text-main)' }}>{dobYear}-{dobMonth}-{dobDay}</strong> | Phone: <strong style={{ color: 'var(--text-main)' }}>{phoneNumber || 'N/A'}</strong></div>
-                <div>• Counter: <strong style={{ color: '#0284c7' }}>{assignedDeskCounter}</strong> | Emp ID: <strong style={{ color: 'var(--text-main)' }}>{employeeID || 'N/A'}</strong></div>
-                <div>• Languages: <strong style={{ color: 'var(--text-main)' }}>{languagesList.join(', ')}</strong></div>
+                <div>• Counter: <strong style={{ color: '#0284c7' }}>{assignedDeskCounter || 'N/A'}</strong> | Emp ID: <strong style={{ color: 'var(--text-main)' }}>{employeeID || 'N/A'}</strong></div>
+                <div>• Languages: <strong style={{ color: 'var(--text-main)' }}>{languagesList.length > 0 ? languagesList.join(', ') : 'None added'}</strong></div>
               </div>
 
               <div style={{ display: 'flex', gap: '14px', marginTop: '14px' }}>

@@ -17,31 +17,28 @@ router.get('/get-all-pending-appointments', AppointmentController.Get_All_Pendin
 // 05. Get All Inprogress Appointments //
 router.get('/get-all-inprogress-appointments', AppointmentController.Get_All_Inprogress_Appointments);
 
-// 06. Get All Waiting For Result Appointments //
-router.get('/get-all-waiting-for-result-appointments', AppointmentController.Get_All_Waiting_For_Result_Appointments);
-
-// 07. Get All Completed Appointments //
+// 06. Get All Completed Appointments //
 router.get('/get-all-completed-appointments', AppointmentController.Get_All_Completed_Appointments);
 
-// 08. Get All Cancelled Appointments //
+// 07. Get All Cancelled Appointments //
 router.get('/get-all-cancelled-appointments', AppointmentController.Get_All_Cancelled_Appointments);
 
-// 09. Delete Appointment //
+// 08. Delete Appointment //
 router.delete('/delete-appointment/:appointmentId', AppointmentController.Delete_Appointment);
 
-// 10. Update Doctor Notes //
+// 09. Update Doctor Notes //
 router.patch('/update-doctor-notes/:appointmentId', AppointmentController.Update_Doctor_Notes);
 
-// 11. Get All Appointments By Doctor ID //
+// 10. Get All Appointments By Doctor ID //
 router.get('/get-all-appointments-by-doctor/:DoctorID', AppointmentController.Get_All_Appointments_By_Doctor_ID);
 
-// 12. Get All Appointments By Patient ID //
+// 11. Get All Appointments By Patient ID //
 router.get('/get-all-appointments-by-patient/:PatientID', AppointmentController.Get_All_Appointments_By_Patient_ID);
 
-// 13. Get All Appointments By Date //
+// 12. Get All Appointments By Date //
 router.get('/get-all-appointments-by-date/:AppointmentDate', AppointmentController.Get_All_Appointments_By_Date);
 
-// 14. Get Appointment Details with doctor and patient details //
+// 13. Get Appointment Details with doctor and patient details //
 router.get('/get-appointment-details/:appointmentId', AppointmentController.Get_Appointment_Details);
 
 module.exports = router;

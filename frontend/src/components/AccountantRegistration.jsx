@@ -40,9 +40,9 @@ export default function AccountantRegistration({ onBackToRoles, onBackToLogin })
 
   // Stage 2: Financial & Professional Information
   const [employeeID, setEmployeeID] = useState('');
-  const [jobPosition, setJobPosition] = useState('Senior Hospital Accountant');
-  const [department, setDepartment] = useState('Patient Billing & Finance');
-  const [qualificationsList, setQualificationsList] = useState(['B.Sc Accountancy', 'CIMA Passed Finalist']);
+  const [jobPosition, setJobPosition] = useState('');
+  const [department, setDepartment] = useState('');
+  const [qualificationsList, setQualificationsList] = useState([]);
   const [qualificationInput, setQualificationInput] = useState('');
 
   // Stage 3: Account Setup
@@ -482,19 +482,25 @@ export default function AccountantRegistration({ onBackToRoles, onBackToLogin })
                 </div>
 
                 <div className="qual-tags-container">
-                  {qualificationsList.map((qual, idx) => (
-                    <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
-                      {qual}
-                      <button
-                        type="button"
-                        className="remove-qual-btn"
-                        onClick={() => handleRemoveQualification(idx)}
-                        title="Remove qualification"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
+                  {qualificationsList.length === 0 ? (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '4px 0' }}>
+                      No qualifications added yet. Type a qualification above and click Add.
+                    </div>
+                  ) : (
+                    qualificationsList.map((qual, idx) => (
+                      <span key={idx} className="qual-tag" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', borderColor: 'rgba(2, 132, 199, 0.35)' }}>
+                        {qual}
+                        <button
+                          type="button"
+                          className="remove-qual-btn"
+                          onClick={() => handleRemoveQualification(idx)}
+                          title="Remove qualification"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -597,8 +603,8 @@ export default function AccountantRegistration({ onBackToRoles, onBackToLogin })
                 </div>
                 <div>• Name: <strong style={{ color: 'var(--text-main)' }}>{fullName || 'N/A'}</strong> ({gender})</div>
                 <div>• DOB: <strong style={{ color: 'var(--text-main)' }}>{dobYear}-{dobMonth}-{dobDay}</strong> | Phone: <strong style={{ color: 'var(--text-main)' }}>{phoneNumber || 'N/A'}</strong></div>
-                <div>• Position: <strong style={{ color: '#0284c7' }}>{jobPosition}</strong> | Emp ID: <strong style={{ color: 'var(--text-main)' }}>{employeeID || 'N/A'}</strong></div>
-                <div>• Qualifications: <strong style={{ color: 'var(--text-main)' }}>{qualificationsList.join(', ')}</strong></div>
+                <div>• Position: <strong style={{ color: '#0284c7' }}>{jobPosition || 'N/A'}</strong> | Emp ID: <strong style={{ color: 'var(--text-main)' }}>{employeeID || 'N/A'}</strong></div>
+                <div>• Qualifications: <strong style={{ color: 'var(--text-main)' }}>{qualificationsList.length > 0 ? qualificationsList.join(', ') : 'None added'}</strong></div>
               </div>
 
               <div style={{ display: 'flex', gap: '14px', marginTop: '14px' }}>

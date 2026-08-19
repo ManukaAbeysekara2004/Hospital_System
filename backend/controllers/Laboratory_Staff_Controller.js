@@ -200,7 +200,25 @@ exports.Laboratory_Staff_Login = async (req, res) => {
 };
 
 
-// 03. Get Laboratory Staff Approve Status //
+// 03. Get All Lab Staff Details //
+//-------------------------------//
+
+exports.Get_All_Lab_Staff_Details = async (req, res) => {
+    try {
+        const allLabStaff = await laboratory_staff.find();
+
+        if (allLabStaff.length === 0) {
+            return res.status(404).json({ message: "No Lab Staff Found" });
+        }
+
+        res.status(200).json({ message: "All Lab Staff Details Retrieved", allLabStaff });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 04. Get Laboratory Staff Approve Status //
 //-----------------------------------------//
 
 exports.Get_Laboratory_Staff_Approve_Status = async (req, res) => {
@@ -221,7 +239,7 @@ exports.Get_Laboratory_Staff_Approve_Status = async (req, res) => {
 };
 
 
-// 04. Get Laboratory Staff Details //
+// 05. Get Laboratory Staff Details //
 //----------------------------------//
 
 exports.Get_Laboratory_Staff_Details = async (req, res) => {
@@ -242,12 +260,12 @@ exports.Get_Laboratory_Staff_Details = async (req, res) => {
 };
 
 
-// 05. Delete Laboratory Staff //
+// 06. Delete Laboratory Staff //
 //-----------------------------//
 
 exports.Delete_Laboratory_Staff = async (req, res) => {
     try {
-        const { laboratoryStaffId } = req.params;
+        const { laboratoryStaffId, Password } = req.params;
 
         // --- Check if Laboratory Staff exists --- //
         const existingLaboratoryStaff = await laboratory_staff.findById(laboratoryStaffId);
@@ -256,6 +274,14 @@ exports.Delete_Laboratory_Staff = async (req, res) => {
             return res.status(404).json({ message: "Laboratory Staff not found" });
         }
 
+        // --- Validate Password -- //
+        const isMatch = await bcrypt.compare(Password, existingLaboratoryStaff.Password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        // --- Delete Laboratory Staff -- //
         await existingLaboratoryStaff.deleteOne();
 
         res.status(200).json({ message: "Laboratory Staff deleted successfully" });
@@ -266,7 +292,7 @@ exports.Delete_Laboratory_Staff = async (req, res) => {
 
 // ------------------------ Update User ------------------------//
 
-// 06. Update Phone Number //
+// 07. Update Phone Number //
 //-------------------------//
 
 exports.Update_Phone_Number = async (req, res) => {
@@ -291,7 +317,7 @@ exports.Update_Phone_Number = async (req, res) => {
     }
 };
 
-// 07. Update Password //
+// 08. Update Password //
 //---------------------//
 
 exports.Update_Password = async (req, res) => {

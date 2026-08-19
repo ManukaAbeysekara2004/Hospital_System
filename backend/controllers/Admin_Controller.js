@@ -37,7 +37,7 @@ exports.Admin_Registration = async (req, res) => {
         } = req.body;
 
         // --- Check NIC Number --- //
-        
+
         const existingNIC = await admin.findOne({ NICNumber });
 
         if (existingNIC) {
@@ -230,7 +230,7 @@ exports.Get_Admin_Details = async (req, res) => {
 
 exports.Delete_Admin = async (req, res) => {
     try {
-        const { adminId } = req.params;
+        const { adminId, Password } = req.params;
 
         // --- Check if Admin exists --- //
         const existingAdmin = await admin.findById(adminId);
@@ -238,6 +238,15 @@ exports.Delete_Admin = async (req, res) => {
         if (!existingAdmin) {
             return res.status(404).json({ message: "Admin not found" });
         }
+
+        // --- Validate Password --- //
+        const isMatch = await bcrypt.compare(Password, existingAdmin.Password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        // --- Delete Admin --- //
 
         await existingAdmin.deleteOne();
 
@@ -247,27 +256,7 @@ exports.Delete_Admin = async (req, res) => {
     }
 };
 
-
-// ------------------------ Admin Manage ------------------------//
-
-// 06. Get All Accountant Details //
-//--------------------------------//
-
-exports.Get_All_Accountant_Details = async (req, res) => {
-    try {
-        const allAccountant = await accountant.find();
-
-        if (allAccountant.length === 0) {
-            return res.status(404).json({ message: "No Accountant Found" });
-        }
-
-        res.status(200).json({ message: "All Accountant Details Retrieved", allAccountant });
-    } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
-    }
-};
-
-// 07. Get All Admin Details //
+// 06. Get All Admin Details //
 //---------------------------//
 
 exports.Get_All_Admin_Details = async (req, res) => {
@@ -284,112 +273,10 @@ exports.Get_All_Admin_Details = async (req, res) => {
     }
 };
 
-// 08. Get All Doctor Details //
-//----------------------------//
 
-exports.Get_All_Doctor_Details = async (req, res) => {
-    try {
-        const allDoctor = await doctor.find();
+// ------------------------ Update Approve Status ------------------------ //
 
-        if (allDoctor.length === 0) {
-            return res.status(404).json({ message: "No Doctor Found" });
-        }
-
-        res.status(200).json({ message: "All Doctor Details Retrieved", allDoctor });
-    } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
-    }
-};
-
-// 09. Get All Lab Staff Details //
-//-------------------------------//
-
-exports.Get_All_Lab_Staff_Details = async (req, res) => {
-    try {
-        const allLabStaff = await laboratory_staff.find();
-
-        if (allLabStaff.length === 0) {
-            return res.status(404).json({ message: "No Lab Staff Found" });
-        }
-
-        res.status(200).json({ message: "All Lab Staff Details Retrieved", allLabStaff });
-    } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
-    }
-};
-
-// 10. Get All Nurse Details //
-//---------------------------//
-
-exports.Get_All_Nurse_Details = async (req, res) => {
-    try {
-        const allNurse = await nurse.find();
-
-        if (allNurse.length === 0) {
-            return res.status(404).json({ message: "No Nurse Found" });
-        }
-
-        res.status(200).json({ message: "All Nurse Details Retrieved", allNurse });
-    } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
-    }
-};
-
-// 11. Get All Patient Details //
-//-----------------------------//
-
-exports.Get_All_Patient_Details = async (req, res) => {
-    try {
-        const allPatient = await patient.find();
-
-        if (allPatient.length === 0) {
-            return res.status(404).json({ message: "No Patient Found" });
-        }
-
-        res.status(200).json({ message: "All Patient Details Retrieved", allPatient });
-    } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
-    }
-};
-
-// 12. Get All Pharmacist Details //
-//--------------------------------//
-
-exports.Get_All_Pharmacist_Details = async (req, res) => {
-    try {
-        const allPharmacist = await pharmacist.find();
-
-        if (allPharmacist.length === 0) {
-            return res.status(404).json({ message: "No Pharmacist Found" });
-        }
-
-        res.status(200).json({ message: "All Pharmacist Details Retrieved", allPharmacist });
-    } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
-    }
-};
-
-// 13. Get All Receptionist Details //
-//----------------------------------//
-
-exports.Get_All_Receptionist_Details = async (req, res) => {
-    try {
-        const allReceptionist = await receptionist.find();
-
-        if (allReceptionist.length === 0) {
-            return res.status(404).json({ message: "No Receptionist Found" });
-        }
-
-        res.status(200).json({ message: "All Receptionist Details Retrieved", allReceptionist });
-    } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
-    }
-};
-
-
-// ----- Update Approve Status ----- //
-
-// 14. Update Accountant Approve Status //
+// 07. Update Accountant Approve Status //
 //--------------------------------------//
 
 exports.Update_Accountant_Approve_Status = async (req, res) => {
@@ -414,7 +301,7 @@ exports.Update_Accountant_Approve_Status = async (req, res) => {
     }
 };
 
-// 15. Update Admin Approve Status //
+// 08. Update Admin Approve Status //
 //---------------------------------//
 
 exports.Update_Admin_Approve_Status = async (req, res) => {
@@ -439,7 +326,7 @@ exports.Update_Admin_Approve_Status = async (req, res) => {
     }
 };
 
-// 16. Update Doctor Approve Status //
+// 09. Update Doctor Approve Status //
 //---------------------------------//
 
 exports.Update_Doctor_Approve_Status = async (req, res) => {
@@ -464,7 +351,7 @@ exports.Update_Doctor_Approve_Status = async (req, res) => {
     }
 };
 
-// 17. Update Lab Staff Approve Status //
+// 10. Update Lab Staff Approve Status //
 //-------------------------------------//
 
 exports.Update_Lab_Staff_Approve_Status = async (req, res) => {
@@ -489,7 +376,7 @@ exports.Update_Lab_Staff_Approve_Status = async (req, res) => {
     }
 };
 
-// 18. Update Nurse Approve Status //
+// 11. Update Nurse Approve Status //
 //---------------------------------//
 
 exports.Update_Nurse_Approve_Status = async (req, res) => {
@@ -514,7 +401,7 @@ exports.Update_Nurse_Approve_Status = async (req, res) => {
     }
 };
 
-// 19. Update Pharmacist Approve Status //
+// 12. Update Pharmacist Approve Status //
 //--------------------------------------//
 
 exports.Update_Pharmacist_Approve_Status = async (req, res) => {
@@ -539,7 +426,7 @@ exports.Update_Pharmacist_Approve_Status = async (req, res) => {
     }
 };
 
-// 20. Update Receptionist Approve Status //
+// 13. Update Receptionist Approve Status //
 //--------------------------------------//
 
 exports.Update_Receptionist_Approve_Status = async (req, res) => {
@@ -567,7 +454,7 @@ exports.Update_Receptionist_Approve_Status = async (req, res) => {
 
 // ------------------------ Bill Manage ------------------------//
 
-// 21. Get Bill Prices Details //
+// 14. Get Bill Prices Details //
 //-----------------------------//
 
 exports.Get_All_Bill_Prices_Details = async (req, res) => {
@@ -585,7 +472,7 @@ exports.Get_All_Bill_Prices_Details = async (req, res) => {
 };
 
 
-// 22. Update Appointment_Price //
+// 15. Update Appointment_Price //
 //------------------------------//
 
 exports.Update_Appointment_Price = async (req, res) => {
@@ -611,7 +498,7 @@ exports.Update_Appointment_Price = async (req, res) => {
 };
 
 
-// 23. Update Blood_Test_Price //
+// 16. Update Blood_Test_Price //
 //-----------------------------//
 
 exports.Update_Blood_Test_Price = async (req, res) => {
@@ -637,7 +524,7 @@ exports.Update_Blood_Test_Price = async (req, res) => {
 };
 
 
-// 24. Update Urine_Test_Price //
+// 17. Update Urine_Test_Price //
 //-----------------------------//
 
 exports.Update_Urine_Test_Price = async (req, res) => {
@@ -662,9 +549,31 @@ exports.Update_Urine_Test_Price = async (req, res) => {
     }
 };
 
+// 18. Create Bill Price //
+//-----------------------//
+
+exports.Create_Bill_Price = async (req, res) => {
+    try {
+        const { Appointment_Price, Blood_Test_Price, Urine_Test_Price } = req.body;
+
+        // --- Create Bill Price ---
+        const New_billPrice = new billPrice({
+            Appointment_Price,
+            Blood_Test_Price,
+            Urine_Test_Price
+        });
+
+        await New_billPrice.save();
+
+        res.status(201).json({ message: "Bill Price Created", New_billPrice });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
 // ------------------------ Update User ------------------------//
 
-// 25. Update Phone Number //
+// 19. Update Phone Number //
 //-------------------------//
 
 exports.Update_Phone_Number = async (req, res) => {
@@ -689,7 +598,7 @@ exports.Update_Phone_Number = async (req, res) => {
     }
 };
 
-// 26. Update Password //
+// 20. Update Password //
 //---------------------//
 
 exports.Update_Password = async (req, res) => {
@@ -726,6 +635,170 @@ exports.Update_Password = async (req, res) => {
         await existingAdmin.save();
 
         res.status(200).json({ message: "Admin Password Updated", existingAdmin });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// ------------------------ Delete User ------------------------//
+
+// 21. Delete Accountant //
+//-----------------------//
+
+exports.Admin_Delete_Accountant = async (req, res) => {
+    try {
+        const { accountantId } = req.params;
+
+        // --- Check if Accountant exists --- //
+        const existingAccountant = await accountant.findById(accountantId);
+
+        if (!existingAccountant) {
+            return res.status(404).json({ message: "Accountant not found" });
+        }
+
+        // --- Delete Accountant --- //
+        await accountant.findByIdAndDelete(accountantId);
+
+        res.status(200).json({ message: "Accountant Deleted", existingAccountant });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 22. Delete Admin //
+//------------------//
+
+exports.Admin_Delete_Admin = async (req, res) => {
+    try {
+        const { adminId } = req.params;
+
+        // --- Check if Admin exists --- //
+        const existingAdmin = await admin.findById(adminId);
+
+        if (!existingAdmin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        // --- Delete Admin --- //
+        await admin.findByIdAndDelete(adminId);
+
+        res.status(200).json({ message: "Admin Deleted", existingAdmin });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 23. Delete Doctor //
+//-------------------//
+
+exports.Admin_Delete_Doctor = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findById(doctorId);
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        // --- Delete Doctor --- //
+        await doctor.findByIdAndDelete(doctorId);
+
+        res.status(200).json({ message: "Doctor Deleted", existingDoctor });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 24. Delete Lab Staff //
+//----------------------//
+
+exports.Admin_Delete_Lab_Staff = async (req, res) => {
+    try {
+        const { labStaffId } = req.params;
+
+        // --- Check if Lab Staff exists --- //
+        const existingLabStaff = await laboratory_staff.findById(labStaffId);
+
+        if (!existingLabStaff) {
+            return res.status(404).json({ message: "Lab Staff not found" });
+        }
+
+        // --- Delete Lab Staff --- //
+        await laboratory_staff.findByIdAndDelete(labStaffId);
+
+        res.status(200).json({ message: "Lab Staff Deleted", existingLabStaff });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 25. Delete Nurse //
+//------------------//
+
+exports.Admin_Delete_Nurse = async (req, res) => {
+    try {
+        const { nurseId } = req.params;
+
+        // --- Check if Nurse exists --- //
+        const existingNurse = await nurse.findById(nurseId);
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        // --- Delete Nurse --- //
+        await nurse.findByIdAndDelete(nurseId);
+
+        res.status(200).json({ message: "Nurse Deleted", existingNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 26. Delete Pharmacist //
+//-----------------------//
+
+exports.Admin_Delete_Pharmacist = async (req, res) => {
+    try {
+        const { pharmacistId } = req.params;
+
+        // --- Check if Pharmacist exists --- //
+        const existingPharmacist = await pharmacist.findById(pharmacistId);
+
+        if (!existingPharmacist) {
+            return res.status(404).json({ message: "Pharmacist not found" });
+        }
+
+        // --- Delete Pharmacist --- //
+        await pharmacist.findByIdAndDelete(pharmacistId);
+
+        res.status(200).json({ message: "Pharmacist Deleted", existingPharmacist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 27. Delete Receptionist //
+//------------------------//
+
+exports.Admin_Delete_Receptionist = async (req, res) => {
+    try {
+        const { receptionistId } = req.params;
+
+        // --- Check if Receptionist exists --- //
+        const existingReceptionist = await receptionist.findById(receptionistId);
+
+        if (!existingReceptionist) {
+            return res.status(404).json({ message: "Receptionist not found" });
+        }
+
+        // --- Delete Receptionist --- //
+        await receptionist.findByIdAndDelete(receptionistId);
+
+        res.status(200).json({ message: "Receptionist Deleted", existingReceptionist });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }

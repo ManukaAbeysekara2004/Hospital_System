@@ -4,7 +4,6 @@ import {
   LogOut,
   FileCheck2,
   Clock,
-  AlertTriangle,
   FlaskConical,
   Activity,
   Sun,
@@ -206,83 +205,6 @@ export default function LabStaffDashboard({ user, onLogout, theme, onToggleTheme
               <FileText size={16} />
               Test Logs
             </button>
-          </div>
-        </div>
-
-        {/* 6 Metric Stat Cards Grid */}
-        <div className="dash-stats-grid">
-          {/* Card 1 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>TEST SAMPLES</span>
-              <h3>42</h3>
-              <p>
-                Received Today <strong style={{ color: '#10b981', marginLeft: 'auto' }}>↑ 10%</strong>
-              </p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(45, 212, 191, 0.15)', color: '#2dd4bf' }}>
-              <FlaskConical size={24} />
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>COMPLETED REPORTS</span>
-              <h3>35</h3>
-              <p>Uploaded Results</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-              <FileCheck2 size={24} />
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>PROCESSING TESTS</span>
-              <h3>7</h3>
-              <p>In Lab Queue</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-              <Clock size={24} />
-            </div>
-          </div>
-
-          {/* Card 4 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>STAT EMERGENCY</span>
-              <h3>3</h3>
-              <p>High Priority Tests</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
-              <AlertTriangle size={24} />
-            </div>
-          </div>
-
-          {/* Card 5 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>LAB DOCTORS</span>
-              <h3>12</h3>
-              <p>Requesting Diagnostics</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7' }}>
-              <Stethoscope size={24} />
-            </div>
-          </div>
-
-          {/* Card 6 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>EQUIPMENT HEALTH</span>
-              <h3>99.5%</h3>
-              <p>Analyzers Calibrated</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(13, 148, 136, 0.15)', color: '#0d9488' }}>
-              <Activity size={24} />
-            </div>
           </div>
         </div>
       </main>

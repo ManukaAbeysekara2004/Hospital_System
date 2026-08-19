@@ -184,7 +184,25 @@ exports.Receptionist_Login = async (req, res) => {
 };
 
 
-// 03. Get Receptionist Approve Status //
+// 03. Get All Receptionist Details //
+//----------------------------------//
+
+exports.Get_All_Receptionist_Details = async (req, res) => {
+    try {
+        const allReceptionist = await receptionist.find();
+
+        if (allReceptionist.length === 0) {
+            return res.status(404).json({ message: "No Receptionist Found" });
+        }
+
+        res.status(200).json({ message: "All Receptionist Details Retrieved", allReceptionist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 04. Get Receptionist Approve Status //
 //-------------------------------------//
 
 exports.Get_Receptionist_Approve_Status = async (req, res) => {
@@ -205,7 +223,7 @@ exports.Get_Receptionist_Approve_Status = async (req, res) => {
 };
 
 
-// 04. Get Receptionist Details //
+// 05. Get Receptionist Details //
 //------------------------------//
 
 exports.Get_Receptionist_Details = async (req, res) => {
@@ -226,12 +244,12 @@ exports.Get_Receptionist_Details = async (req, res) => {
 };
 
 
-// 05. Delete Receptionist //
+// 06. Delete Receptionist //
 //-------------------------//
 
 exports.Delete_Receptionist = async (req, res) => {
     try {
-        const { receptionistId } = req.params;
+        const { receptionistId, Password } = req.params;
 
         // --- Check if Receptionist exists --- //
         const existingReceptionist = await receptionist.findById(receptionistId);
@@ -240,6 +258,14 @@ exports.Delete_Receptionist = async (req, res) => {
             return res.status(404).json({ message: "Receptionist not found" });
         }
 
+        // --- Validate Password -- //
+        const isMatch = await bcrypt.compare(Password, existingReceptionist.Password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        // --- Delete Receptionist -- //
         await existingReceptionist.deleteOne();
 
         res.status(200).json({ message: "Receptionist deleted successfully" });
@@ -250,7 +276,7 @@ exports.Delete_Receptionist = async (req, res) => {
 
 // ------------------------ Update User ------------------------//
 
-// 06. Update Phone Number //
+// 07. Update Phone Number //
 //-------------------------//
 
 exports.Update_Phone_Number = async (req, res) => {
@@ -275,7 +301,7 @@ exports.Update_Phone_Number = async (req, res) => {
     }
 };
 
-// 07. Update Password //
+// 08. Update Password //
 //---------------------//
 
 exports.Update_Password = async (req, res) => {

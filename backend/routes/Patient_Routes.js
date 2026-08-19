@@ -5,18 +5,15 @@ const PatientController = require('../controllers/Patient_Controller')
 // 01. Add Patient Record //
 router.post('/add-patient', PatientController.Add_Patient_Record);
 
-// 02. Search Patient By NIC//
-router.get('/search/:NICNumber', PatientController.Search_Patient_NIC);
+// 02. Delete Patient //
+router.delete('/delete/:patientId', PatientController.Delete_Patient);
 
-// 03. Search Patient By PatientRegID//
-router.get('/search-by-id/:PatientRegID', PatientController.Search_Patient_By_PatientRegID);
-
-// 04. Delete Patient //
-router.delete('/delete/:patientId', PatientController.Delete_Patient);  
+// 03. Get all patiens //
+router.get('/get-all-patients', PatientController.Get_All_Patients);
 
 // ------------------------ Update User ------------------------//
 
-// 05. Update Contact Number //
+// 04. Update Contact Number //
 router.patch('/update-contact-number/:patientId', PatientController.Update_Contact_Number);
 
 module.exports = router;

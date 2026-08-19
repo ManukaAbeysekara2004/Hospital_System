@@ -4,7 +4,6 @@ import {
   LogOut,
   Calendar,
   FileSpreadsheet,
-  CheckCircle2,
   Clock,
   Sun,
   Moon,
@@ -40,6 +39,23 @@ export default function DoctorDashboard({ user, onLogout, theme, onToggleTheme }
       .join('')
       .substring(0, 2)
       .toUpperCase();
+  };
+
+  const handleLogoutClick = async () => {
+    const doctorId = user?._id || user?.id;
+    if (doctorId) {
+      try {
+        await fetch(`http://localhost:5000/api/doctor/logout/${doctorId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (err) {
+        console.error('Error executing Doctor_Logout:', err);
+      }
+    }
+    onLogout();
   };
 
   return (
@@ -105,7 +121,7 @@ export default function DoctorDashboard({ user, onLogout, theme, onToggleTheme }
             </div>
           </div>
 
-          <button className="dash-logout-btn" onClick={onLogout}>
+          <button className="dash-logout-btn" onClick={handleLogoutClick}>
             <LogOut size={16} />
             Logout
           </button>
@@ -179,7 +195,7 @@ export default function DoctorDashboard({ user, onLogout, theme, onToggleTheme }
             }}>
               DOCTOR DASHBOARD | Session Active
             </span>
-            <h2>Welcome, Dr. {user?.FullName || 'Doctor'}</h2>
+            <h2>Welcome back, Dr. {user?.FullName || 'Doctor'}</h2>
             <p>
               Apex Health International Hospital live clinical portal. Manage patient consultations, digital e-prescriptions, diagnostic orders, and ward rosters.
             </p>
@@ -203,83 +219,6 @@ export default function DoctorDashboard({ user, onLogout, theme, onToggleTheme }
               <FileSpreadsheet size={16} />
               Prescribe
             </button>
-          </div>
-        </div>
-
-        {/* 6 Metric Stat Cards Grid */}
-        <div className="dash-stats-grid">
-          {/* Card 1 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>TODAY'S APPTS</span>
-              <h3>18</h3>
-              <p>
-                Scheduled Visits <strong style={{ color: '#10b981', marginLeft: 'auto' }}>↑ 8%</strong>
-              </p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7' }}>
-              <Calendar size={24} />
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>CONSULTATIONS</span>
-              <h3>12</h3>
-              <p>Completed Consultations</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-              <CheckCircle2 size={24} />
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>WAITING ROOM</span>
-              <h3>6</h3>
-              <p>Patients In Queue</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-              <Clock size={24} />
-            </div>
-          </div>
-
-          {/* Card 4 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>PRESCRIPTIONS</span>
-              <h3>24</h3>
-              <p>Digital Rx Sent</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(13, 148, 136, 0.15)', color: '#0d9488' }}>
-              <FileSpreadsheet size={24} />
-            </div>
-          </div>
-
-          {/* Card 5 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>TOTAL PATIENTS</span>
-              <h3>320</h3>
-              <p>Assigned Under Care</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(45, 212, 191, 0.15)', color: '#2dd4bf' }}>
-              <Users size={24} />
-            </div>
-          </div>
-
-          {/* Card 6 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>LAB REPORTS</span>
-              <h3>5</h3>
-              <p>Pending Doctor Review</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
-              <FlaskConical size={24} />
-            </div>
           </div>
         </div>
       </main>

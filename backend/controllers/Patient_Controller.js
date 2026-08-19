@@ -95,49 +95,7 @@ exports.Add_Patient_Record = async (req, res) => {
 };
 
 
-// 02. Search Patient By NIC //
-//---------------------------//
-
-exports.Search_Patient_NIC = async (req, res) => {
-    try {
-        const { NICNumber } = req.params;
-
-        // --- Check if Patient exists --- //
-        const existingPatient = await patient.findOne({ NICNumber });
-
-        if (!existingPatient) {
-            return res.status(404).json({ message: "Patient not found" });
-        }
-
-        res.status(200).json({ message: "Patient found successfully", existingPatient });
-    } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
-    }
-};
-
-
-// 03. Search Patient By PatientRegID //
-//------------------------------------//
-
-exports.Search_Patient_By_PatientRegID = async (req, res) => {
-    try {
-        const { PatientRegID } = req.params;
-
-        // --- Check if Patient exists --- //
-        const existingPatient = await patient.findOne({ PatientRegID });
-
-        if (!existingPatient) {
-            return res.status(404).json({ message: "Patient not found" });
-        }
-
-        res.status(200).json({ message: "Patient found successfully", existingPatient });
-    } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
-    }
-};
-
-
-// 04. Delete Patient //
+// 02. Delete Patient //
 //--------------------//
 
 exports.Delete_Patient = async (req, res) => {
@@ -159,9 +117,23 @@ exports.Delete_Patient = async (req, res) => {
     }
 }; 
 
+
+// 03. Get all patients //
+//----------------------//
+
+exports.Get_All_Patients = async (req, res) => {
+    try {
+        const allPatients = await patient.find().sort({ createdAt: -1 });
+        
+        res.status(200).json({ message: "All patients fetched successfully", allPatients });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
 // ------------------------ Update User ------------------------//
 
-// 05. Update Contact Number //
+// 04. Update Contact Number //
 //---------------------------//
 
 exports.Update_Contact_Number = async (req, res) => {

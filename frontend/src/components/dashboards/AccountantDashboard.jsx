@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Receipt,
   LogOut,
-  DollarSign,
   CreditCard,
   TrendingUp,
   FileText,
@@ -204,85 +203,6 @@ export default function AccountantDashboard({ user, onLogout, theme, onToggleThe
               <TrendingUp size={16} />
               Reports
             </button>
-          </div>
-        </div>
-
-        {/* 6 Metric Stat Cards Grid */}
-        <div className="dash-stats-grid">
-          {/* Card 1 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>MONTHLY REVENUE</span>
-              <h3>LKR 4.2M</h3>
-              <p>
-                Settled Invoices <strong style={{ color: '#10b981', marginLeft: 'auto' }}>↑ 12%</strong>
-              </p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-              <DollarSign size={24} />
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>CLEARED PAYMENTS</span>
-              <h3>1,480</h3>
-              <p>Processed Payments</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-              <CreditCard size={24} />
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>PENDING INVOICES</span>
-              <h3>14</h3>
-              <p>Awaiting Payment</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-              <Clock size={24} />
-            </div>
-          </div>
-
-          {/* Card 4 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>PATIENT BILLS</span>
-              <h3>340</h3>
-              <p>Issued This Month</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7' }}>
-              <Receipt size={24} />
-            </div>
-          </div>
-
-          {/* Card 5 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>GROWTH INDEX</span>
-              <h3>+12.4%</h3>
-              <p>
-                Financial Growth <strong style={{ color: '#10b981', marginLeft: 'auto' }}>↑ 100%</strong>
-              </p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(13, 148, 136, 0.15)', color: '#0d9488' }}>
-              <TrendingUp size={24} />
-            </div>
-          </div>
-
-          {/* Card 6 */}
-          <div className="dash-stat-card">
-            <div className="dash-stat-info">
-              <span>PENDING LAB BILLS</span>
-              <h3>8</h3>
-              <p>In Processing Queue</p>
-            </div>
-            <div className="dash-stat-icon-wrapper" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
-              <FileText size={24} />
-            </div>
           </div>
         </div>
       </main>
