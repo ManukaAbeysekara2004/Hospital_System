@@ -249,7 +249,8 @@ exports.Get_Receptionist_Details = async (req, res) => {
 
 exports.Delete_Receptionist = async (req, res) => {
     try {
-        const { receptionistId, Password } = req.params;
+        const { receptionistId } = req.body;
+        const { Password } = req.body;
 
         // --- Check if Receptionist exists --- //
         const existingReceptionist = await receptionist.findById(receptionistId);
@@ -340,6 +341,50 @@ exports.Update_Password = async (req, res) => {
         await existingReceptionist.save();
 
         res.status(200).json({ message: "Pharmacist password updated", pharmacistDetails: existingReceptionist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 09. Forgot Password //
+//---------------------//
+
+exports.Forgot_Password = async (req, res) => {
+    try {
+        const { Email, NICNumber, NewPassword, OTP } = req.body;
+
+        // --- Check if Receptionist exists By email --- //
+        const existingReceptionist = await receptionist.findOne({ Email });
+
+        if (!existingReceptionist) {
+            return res.status(404).json({ message: "Receptionist not found" });
+        }
+
+        // --- Check if NICNumber matches existingReceptionist --- //
+        if (existingReceptionist.NICNumber !== NICNumber) {
+            return res.status(400).json({ message: "Invalid NIC Number" });
+        }
+
+        // --- Password Validation --- //
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Check OTP === 000000 --- //
+        if (OTP === "000000") {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // --- Hash Password And Save --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        existingReceptionist.Password = hashedPassword;
+        await existingReceptionist.save();
+
+        res.status(200).json({ message: "Receptionist Password Updated", existingReceptionist });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }

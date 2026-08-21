@@ -230,7 +230,8 @@ exports.Get_Admin_Details = async (req, res) => {
 
 exports.Delete_Admin = async (req, res) => {
     try {
-        const { adminId, Password } = req.params;
+        const { adminId } = req.params;
+        const { Password } = req.body;
 
         // --- Check if Admin exists --- //
         const existingAdmin = await admin.findById(adminId);
@@ -641,9 +642,54 @@ exports.Update_Password = async (req, res) => {
 };
 
 
+// 21. Forgot Password //
+//---------------------//
+
+exports.Forgot_Password = async (req, res) => {
+    try {
+        const { email, NICNumber, NewPassword, OTP } = req.body;
+
+        // --- Check if Admin exists --- //
+        const existingAdmin = await admin.findOne({ email });
+
+        if (!existingAdmin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        // --- Check if NICNumber matches existingAdmin --- //
+        if (existingAdmin.NICNumber !== NICNumber) {
+            return res.status(400).json({ message: "Invalid NIC Number" });
+        }
+
+        // --- Check if New Password is valid --- //
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Check OTP === 000000 --- //
+        if (OTP === "000000") {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // --- Hash New Password --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        // --- Update Password --- //
+        existingAdmin.Password = hashedPassword;
+        await existingAdmin.save();
+
+        res.status(200).json({ message: "Admin Password Updated", existingAdmin });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+}
+
+
 // ------------------------ Delete User ------------------------//
 
-// 21. Delete Accountant //
+// 22. Delete Accountant //
 //-----------------------//
 
 exports.Admin_Delete_Accountant = async (req, res) => {
@@ -666,7 +712,7 @@ exports.Admin_Delete_Accountant = async (req, res) => {
     }
 };
 
-// 22. Delete Admin //
+// 23. Delete Admin //
 //------------------//
 
 exports.Admin_Delete_Admin = async (req, res) => {
@@ -689,7 +735,7 @@ exports.Admin_Delete_Admin = async (req, res) => {
     }
 };
 
-// 23. Delete Doctor //
+// 24. Delete Doctor //
 //-------------------//
 
 exports.Admin_Delete_Doctor = async (req, res) => {
@@ -712,7 +758,7 @@ exports.Admin_Delete_Doctor = async (req, res) => {
     }
 };
 
-// 24. Delete Lab Staff //
+// 25. Delete Lab Staff //
 //----------------------//
 
 exports.Admin_Delete_Lab_Staff = async (req, res) => {
@@ -735,7 +781,7 @@ exports.Admin_Delete_Lab_Staff = async (req, res) => {
     }
 };
 
-// 25. Delete Nurse //
+// 26. Delete Nurse //
 //------------------//
 
 exports.Admin_Delete_Nurse = async (req, res) => {
@@ -758,7 +804,7 @@ exports.Admin_Delete_Nurse = async (req, res) => {
     }
 };
 
-// 26. Delete Pharmacist //
+// 27. Delete Pharmacist //
 //-----------------------//
 
 exports.Admin_Delete_Pharmacist = async (req, res) => {
@@ -781,7 +827,7 @@ exports.Admin_Delete_Pharmacist = async (req, res) => {
     }
 };
 
-// 27. Delete Receptionist //
+// 28. Delete Receptionist //
 //------------------------//
 
 exports.Admin_Delete_Receptionist = async (req, res) => {

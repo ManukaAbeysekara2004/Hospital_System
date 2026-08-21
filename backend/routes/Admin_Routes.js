@@ -15,7 +15,7 @@ router.get('/approve-status/:adminId', AdminController.Get_Admin_Approve_Status)
 router.get('/details/:adminId', AdminController.Get_Admin_Details);
 
 // 05. Delete Admin //
-router.delete('/delete/:adminId', AdminController.Delete_Admin);   
+router.delete('/delete/:adminId', AdminController.Delete_Admin);
 
 // 06. Get All Admin Details //
 router.get('/get-all-admin-details', AdminController.Get_All_Admin_Details);
@@ -68,9 +68,12 @@ router.patch('/update-phone-number/:adminId', AdminController.Update_Phone_Numbe
 // 20. Update Password //
 router.patch('/update-password/:adminId', AdminController.Update_Password);
 
+// 21. Forgot Password //
+router.patch('/forgot-password', AdminController.Forgot_Password);
+
 // ------------------------ Delete User ------------------------//
 
-// 21. Delete Accountant //
+// 22. Delete Accountant //
 router.delete('/delete-accountant/:accountantId', AdminController.Admin_Delete_Accountant);
 
 // 22. Delete Admin //

@@ -21,7 +21,13 @@ import {
   Stethoscope,
   Pencil,
   AlertCircle,
-  Trash2
+  Trash2,
+  RefreshCw,
+  Lock,
+  Key,
+  Mail,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 const currentYear = new Date().getFullYear();
@@ -41,6 +47,13 @@ const months = [
   { value: '12', label: 'December (12)' }
 ];
 const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+
+const TAB_TITLES = {
+  dashboard: 'Dashboard',
+  appointments: 'Appointments',
+  doctors: 'Doctors',
+  settings: 'Settings'
+};
 
 export default function ReceptionistDashboard({ user, onLogout, theme, onToggleTheme }) {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -90,6 +103,284 @@ export default function ReceptionistDashboard({ user, onLogout, theme, onToggleT
   // Print Appointment Slip Modal State
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [printData, setPrintData] = useState(null);
+
+  // Active Navigation Tab State ('dashboard' | 'appointments')
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Menu Appointment Page States
+  const [pendingAppointments, setPendingAppointments] = useState([]);
+  const [inprogressAppointments, setInprogressAppointments] = useState([]);
+  const [completedAppointments, setCompletedAppointments] = useState([]);
+  const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
+  const [appointmentsError, setAppointmentsError] = useState('');
+  const [apptSearchQuery, setApptSearchQuery] = useState('');
+
+  // Menu Doctor Page States & Fetch (using Get_All_Doctor_Details endpoint)
+  const [doctorSearchQuery, setDoctorSearchQuery] = useState('');
+
+  const fetchAllDoctorDetails = async () => {
+    setIsLoadingDoctors(true);
+    setDoctorFetchError('');
+    try {
+      const response = await fetch('http://localhost:5000/api/doctor/get-all-doctor-details');
+      const data = await response.json();
+      if (response.ok && data.allDoctor) {
+        setDoctorsList(data.allDoctor);
+      } else {
+        setDoctorFetchError(data.message || 'Failed to fetch doctor details.');
+      }
+    } catch (err) {
+      console.error('Error fetching doctor details:', err);
+      setDoctorFetchError('Could not connect to backend server to load doctors.');
+    } finally {
+      setIsLoadingDoctors(false);
+    }
+  };
+
+  // 03. Sorting Rule: InHospitalAvailability true first (sorted by NoOfAppointments asc), InHospitalAvailability false last (sorted by NoOfAppointments asc)
+  const filteredAndSortedDoctors = doctorsList
+    .filter((doc) => {
+      if (!doctorSearchQuery.trim()) return true;
+      const q = doctorSearchQuery.toLowerCase().trim();
+      const name = (doc.FullName || '').toLowerCase();
+      const room = (doc.RoomNumber || '').toLowerCase();
+      const spec = (doc.Specialization || doc.Department || '').toLowerCase();
+      return name.includes(q) || room.includes(q) || spec.includes(q);
+    })
+    .sort((a, b) => {
+      const availA = a.InHospitalAvailability === true;
+      const availB = b.InHospitalAvailability === true;
+
+      // InHospitalAvailability true first, false last
+      if (availA && !availB) return -1;
+      if (!availA && availB) return 1;
+
+      // Sort by NoOfAppointments ascending (smallest first)
+      const countA = typeof a.NoOfAppointments === 'number' ? a.NoOfAppointments : 0;
+      const countB = typeof b.NoOfAppointments === 'number' ? b.NoOfAppointments : 0;
+      return countA - countB;
+    });
+
+  // Delete Appointment Confirmation Modal State
+  const [showDeleteApptModal, setShowDeleteApptModal] = useState(false);
+  const [apptToDelete, setApptToDelete] = useState(null);
+  const [isDeletingAppt, setIsDeletingAppt] = useState(false);
+
+  // Settings & Receptionist Profile State (Get_Receptionist_Details)
+  const [myDetails, setMyDetails] = useState(null);
+  const [isLoadingMyDetails, setIsLoadingMyDetails] = useState(false);
+  const [myDetailsError, setMyDetailsError] = useState('');
+
+  // 02. First Button: Update Phone Number Modal State
+  const [showMyPhoneModal, setShowMyPhoneModal] = useState(false);
+  const [newMyPhone, setNewMyPhone] = useState('');
+  const [myPhoneError, setMyPhoneError] = useState('');
+  const [myPhoneSuccess, setMyPhoneSuccess] = useState('');
+  const [isUpdatingMyPhone, setIsUpdatingMyPhone] = useState(false);
+
+  // 03. Second Button: Update Password Modal State & Visibility Toggles
+  const [showMyPasswordModal, setShowMyPasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [myPasswordError, setMyPasswordError] = useState('');
+  const [myPasswordSuccess, setMyPasswordSuccess] = useState('');
+  const [isUpdatingMyPassword, setIsUpdatingMyPassword] = useState(false);
+
+  // 04. Third Button: Delete Account Modal State
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deleteAccountPassword, setDeleteAccountPassword] = useState('');
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  // 01. Fetch Receptionist Details using Get_Receptionist_Details endpoint
+  const fetchMyReceptionistDetails = async () => {
+    const recId = user?._id || user?.id || user?.receptionistDetails?._id;
+    if (!recId) return;
+
+    setIsLoadingMyDetails(true);
+    setMyDetailsError('');
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/receptionist/details/${recId}`);
+      const data = await response.json();
+      if (response.ok && data.receptionistDetails) {
+        setMyDetails(data.receptionistDetails);
+        setNewMyPhone(data.receptionistDetails.PhoneNumber || '');
+      } else {
+        setMyDetailsError(data.message || 'Failed to load receptionist details.');
+      }
+    } catch (err) {
+      console.error('Error fetching receptionist details:', err);
+      setMyDetailsError('Could not connect to backend server to load profile.');
+    } finally {
+      setIsLoadingMyDetails(false);
+    }
+  };
+
+  // 02. Update Phone Number Submit Handler (calls Update_Phone_Number)
+  const handleUpdateMyPhoneSubmit = async (e) => {
+    e.preventDefault();
+    setMyPhoneError('');
+    setMyPhoneSuccess('');
+
+    const recId = user?._id || user?.id || user?.receptionistDetails?._id;
+    if (!recId) {
+      setMyPhoneError('User session ID not found.');
+      return;
+    }
+
+    if (!/^\d{10}$/.test(newMyPhone.trim())) {
+      setMyPhoneError('Phone Number must contain exactly 10 digits.');
+      return;
+    }
+
+    setIsUpdatingMyPhone(true);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/receptionist/update-phone/${recId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ PhoneNumber: newMyPhone.trim() })
+      });
+
+      const resData = await response.json();
+
+      if (response.ok) {
+        setIsUpdatingMyPhone(false);
+        setMyPhoneSuccess('Phone Number updated successfully!');
+        setTimeout(() => {
+          setShowMyPhoneModal(false);
+          setMyPhoneSuccess('');
+        }, 1200);
+        fetchMyReceptionistDetails();
+      } else {
+        setIsUpdatingMyPhone(false);
+        setMyPhoneError(resData.message || 'Failed to update phone number.');
+      }
+    } catch (err) {
+      console.error('Error updating phone number:', err);
+      setIsUpdatingMyPhone(false);
+      setMyPhoneError('Could not connect to backend server.');
+    }
+  };
+
+  // 03. Update Password Submit Handler (calls Update_Password)
+  const handleUpdateMyPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setMyPasswordError('');
+    setMyPasswordSuccess('');
+
+    const recId = user?._id || user?.id || user?.receptionistDetails?._id;
+    if (!recId) {
+      setMyPasswordError('User session ID not found.');
+      return;
+    }
+
+    if (!oldPassword) {
+      setMyPasswordError('Please enter your Old Password.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setMyPasswordError('New Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setMyPasswordError('New Password and Confirm New Password do not match.');
+      return;
+    }
+
+    setIsUpdatingMyPassword(true);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/receptionist/update-password/${recId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          OldPassword: oldPassword,
+          NewPassword: newPassword
+        })
+      });
+
+      const resData = await response.json();
+
+      if (response.ok) {
+        setIsUpdatingMyPassword(false);
+        setMyPasswordSuccess('Password updated successfully!');
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => {
+          setShowMyPasswordModal(false);
+          setMyPasswordSuccess('');
+        }, 1200);
+      } else {
+        setIsUpdatingMyPassword(false);
+        setMyPasswordError(resData.message || 'Failed to update password.');
+      }
+    } catch (err) {
+      console.error('Error updating password:', err);
+      setIsUpdatingMyPassword(false);
+      setMyPasswordError('Could not connect to backend server.');
+    }
+  };
+
+  // 04. Delete Receptionist Submit Handler (calls Delete_Receptionist)
+  const handleDeleteMyAccountSubmit = async (e) => {
+    e.preventDefault();
+    setDeleteAccountError('');
+
+    const recId = user?._id || user?.id || user?.receptionistDetails?._id;
+    if (!recId) {
+      setDeleteAccountError('User session ID not found.');
+      return;
+    }
+
+    if (!deleteAccountPassword) {
+      setDeleteAccountError('Please enter your Password to confirm deletion.');
+      return;
+    }
+
+    setIsDeletingAccount(true);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/receptionist/delete/${recId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          receptionistId: recId,
+          Password: deleteAccountPassword
+        })
+      });
+
+      const resData = await response.json();
+
+      if (response.ok) {
+        setIsDeletingAccount(false);
+        setShowDeleteAccountModal(false);
+        onLogout();
+      } else {
+        setIsDeletingAccount(false);
+        setDeleteAccountError(resData.message || 'Failed to delete account. Incorrect password.');
+      }
+    } catch (err) {
+      console.error('Error deleting receptionist account:', err);
+      setIsDeletingAccount(false);
+      setDeleteAccountError('Could not connect to backend server.');
+    }
+  };
 
   // Open Add Appointment Modal and fetch Doctor Details using Get_Doctor_Details endpoint
   const handleOpenAddAppointmentModal = async (patient) => {
@@ -169,6 +460,17 @@ export default function ReceptionistDashboard({ user, onLogout, theme, onToggleT
     const billPricesId = '6a80c93ebfa6d7d230ce2a27';
 
     try {
+      // Call create_Payment on Payment_Controller (Item 01)
+      try {
+        await fetch('http://localhost:5000/api/payment/create-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ PatientID: patientId })
+        });
+      } catch (e) {
+        console.error('Error creating payment:', e);
+      }
+
       const response = await fetch(`http://localhost:5000/api/appointment/add-appointment/${patientId}/${doctorId}`, {
         method: 'POST',
         headers: {
@@ -201,6 +503,7 @@ export default function ReceptionistDashboard({ user, onLogout, theme, onToggleT
         setShowPrintModal(true);
 
         fetchPatients();
+        fetchAllAppointments();
       } else {
         setAppointmentError(resData.message || 'Failed to create appointment.');
       }
@@ -243,9 +546,143 @@ export default function ReceptionistDashboard({ user, onLogout, theme, onToggleT
     }
   };
 
+  // Fetch All Appointment Categories in Parallel (Get_All_Pending_Appointments, Get_All_Inprogress_Appointments, Get_All_Completed_Appointments)
+  const fetchAllAppointments = async () => {
+    setIsLoadingAppointments(true);
+    setAppointmentsError('');
+    try {
+      const [pendingRes, inprogressRes, completedRes, doctorsRes, patientsRes] = await Promise.all([
+        fetch('http://localhost:5000/api/appointment/get-all-pending-appointments'),
+        fetch('http://localhost:5000/api/appointment/get-all-inprogress-appointments'),
+        fetch('http://localhost:5000/api/appointment/get-all-completed-appointments'),
+        fetch('http://localhost:5000/api/doctor/get-all-doctor-details'),
+        fetch('http://localhost:5000/api/patient/get-all-patients')
+      ]);
+
+      const pendingData = await pendingRes.json();
+      const inprogressData = await inprogressRes.json();
+      const completedData = await completedRes.json();
+      const doctorsData = doctorsRes.ok ? await doctorsRes.json() : null;
+      const patientsData = patientsRes.ok ? await patientsRes.json() : null;
+
+      if (doctorsData?.allDoctor) {
+        setDoctorsList(doctorsData.allDoctor);
+      }
+      if (patientsData?.allPatients) {
+        const sortedPatients = (patientsData.allPatients || []).sort((a, b) => {
+          if (a.createdAt && b.createdAt) {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+          }
+          return (b.PatientRegID || '').localeCompare(a.PatientRegID || '');
+        });
+        setPatients(sortedPatients);
+      }
+
+      if (pendingRes.ok) {
+        setPendingAppointments(pendingData.allPendingAppointments || []);
+      } else {
+        setAppointmentsError(pendingData.message || 'Failed to fetch pending appointments.');
+      }
+
+      if (inprogressRes.ok) {
+        setInprogressAppointments(inprogressData.allInprogressAppointments || []);
+      }
+
+      if (completedRes.ok) {
+        setCompletedAppointments(completedData.allCompletedAppointments || []);
+      }
+    } catch (err) {
+      console.error('Error fetching appointments:', err);
+      setAppointmentsError('Could not connect to backend server to load appointments.');
+    } finally {
+      setIsLoadingAppointments(false);
+    }
+  };
+
   useEffect(() => {
     fetchPatients();
+    fetchAllAppointments();
+    fetchAllDoctorDetails();
   }, []);
+
+  // Helper to resolve Patient details by ID or object
+  const getPatientDetails = (patientId) => {
+    if (!patientId) return null;
+    if (typeof patientId === 'object' && patientId.PatientRegID) return patientId;
+    return patients.find(p => p._id === patientId || p.PatientRegID === patientId) || null;
+  };
+
+  // Helper to resolve Doctor details by ID or object
+  const getDoctorDetails = (doctorId) => {
+    if (!doctorId) return null;
+    if (typeof doctorId === 'object' && doctorId.FullName) return doctorId;
+    return doctorsList.find(d => d._id === doctorId) || null;
+  };
+
+  // Open Delete Appointment Modal
+  const handleOpenDeleteApptModal = (appt) => {
+    setApptToDelete(appt);
+    setShowDeleteApptModal(true);
+  };
+
+  // Helper to delete payment model when appointment is deleted (Item 02)
+  const deletePaymentForPatient = async (patientId) => {
+    if (!patientId) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/payment/get-payment-details-by-patientid/${patientId}`);
+      const data = await res.json();
+      const payObj = data.data?.isPaymentExist || data.isPaymentExist;
+      if (payObj && payObj._id) {
+        await fetch(`http://localhost:5000/api/payment/delete-payment/${payObj._id}`, {
+          method: 'DELETE'
+        });
+      }
+    } catch (err) {
+      console.error('Error deleting payment for patient:', err);
+    }
+  };
+
+  // Confirm and Execute Delete_Appointment Call
+  const handleConfirmDeleteAppt = async () => {
+    if (!apptToDelete) return;
+    setIsDeletingAppt(true);
+
+    try {
+      if (apptToDelete.PatientID) {
+        await deletePaymentForPatient(apptToDelete.PatientID);
+      }
+      const response = await fetch(`http://localhost:5000/api/appointment/delete-appointment/${apptToDelete._id}`, {
+        method: 'DELETE'
+      });
+      const resData = await response.json();
+      if (response.ok) {
+        setIsDeletingAppt(false);
+        setShowDeleteApptModal(false);
+        setApptToDelete(null);
+        fetchAllAppointments();
+        fetchPatients();
+      } else {
+        setIsDeletingAppt(false);
+        alert(resData.message || 'Failed to delete appointment.');
+      }
+    } catch (err) {
+      console.error('Error deleting appointment:', err);
+      setIsDeletingAppt(false);
+      alert('Could not connect to backend server to delete appointment.');
+    }
+  };
+
+  // Filter Appointments by Search Query (matching PatientRegID or Patient FullName)
+  const filterAppointments = (apptList) => {
+    if (!apptSearchQuery.trim()) return apptList;
+    const q = apptSearchQuery.toLowerCase().trim();
+    return apptList.filter((appt) => {
+      const patientObj = getPatientDetails(appt.PatientID);
+      const regId = (patientObj?.PatientRegID || appt.PatientID || '').toLowerCase();
+      const patientName = (patientObj?.FullName || '').toLowerCase();
+      return regId.includes(q) || patientName.includes(q);
+    });
+  };
 
   const getGreeting = () => {
     const hour = currentTime.getHours();
@@ -453,19 +890,40 @@ export default function ReceptionistDashboard({ user, onLogout, theme, onToggleT
 
           {/* Sidebar Nav Items */}
           <nav className="dash-sidebar-nav">
-            <button className="dash-nav-item active">
+            <button
+              className={`dash-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dashboard')}
+            >
               <LayoutDashboard size={18} />
               Dashboard
             </button>
-            <button className="dash-nav-item">
+            <button
+              className={`dash-nav-item ${activeTab === 'appointments' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('appointments');
+                fetchAllAppointments();
+              }}
+            >
               <Calendar size={18} />
               Appointments
             </button>
-            <button className="dash-nav-item">
+            <button
+              className={`dash-nav-item ${activeTab === 'doctors' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('doctors');
+                fetchAllDoctorDetails();
+              }}
+            >
               <Stethoscope size={18} />
               Doctors
             </button>
-            <button className="dash-nav-item">
+            <button
+              className={`dash-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab('settings');
+                fetchMyReceptionistDetails();
+              }}
+            >
               <Settings size={18} />
               Settings
             </button>
@@ -559,171 +1017,1027 @@ export default function ReceptionistDashboard({ user, onLogout, theme, onToggleT
               RECEPTIONIST DASHBOARD | Session Active
             </span>
             <h2>Welcome back, {user?.FullName || 'Emily Watson'}</h2>
-            <p>
-              Apex Health International Hospital live operations overview. Manage patient registrations, appointment booking, and desk support operations.
-            </p>
+            {activeTab === 'dashboard' && (
+              <p>
+                Apex Health International Hospital live operations overview. Manage patient registrations, appointment booking, and desk support operations.
+              </p>
+            )}
           </div>
 
-          {/* Right Action Buttons */}
-          <div className="dash-hero-action-buttons">
-            <button className="dash-action-btn-primary" onClick={() => setShowAddModal(true)}>
-              <UserPlus size={16} />
-              Add Patient
-            </button>
-            <button className="dash-action-btn-secondary">
-              <Calendar size={16} />
-              Book Appt
-            </button>
-            <button className="dash-action-btn-secondary">
-              <FlaskConical size={16} />
-              Request Lab
-            </button>
-            <button className="dash-action-btn-secondary">
-              <FileText size={16} />
-              Invoice
-            </button>
+          {/* Right Active Page Title Badge */}
+          <div className="dash-hero-right-badge">
+            {TAB_TITLES[activeTab] || 'Dashboard'}
           </div>
         </div>
 
-        {/* Search Bar & Add Patient Button Toolbar Under Welcome Back Box */}
-        <div className="dash-search-toolbar">
-          {/* Left Spacer so search box is dead center */}
-          <div className="dash-toolbar-left-space" />
+        {activeTab === 'appointments' ? (
+          /* ========================================================= */
+          /* MENU APPOINTMENT PAGE - 3 PARALLEL SECTIONS & SEARCH BAR */
+          /* ========================================================= */
+          <div className="dash-appointments-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {/* Appointment Page Header & Search Toolbar */}
+            {/* Centered Search Bar & Refresh Toolbar */}
+            <div className="dash-search-toolbar">
+              {/* Left Spacer so search box is dead center */}
+              <div className="dash-toolbar-left-space" />
 
-          {/* Center Search Bar & Search Button */}
-          <div className="dash-search-center-group">
-            <div className="dash-search-input-wrapper">
-              <Search size={18} className="dash-search-icon" />
-              <input
-                type="text"
-                placeholder="Search by Patient Name or ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="dash-search-input"
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
-            <button className="dash-search-btn" onClick={handleSearch}>
-              <Search size={16} />
-              Search
-            </button>
-          </div>
-
-          {/* Right Corner: Add Patient Button */}
-          <div className="dash-toolbar-right-group">
-            <button className="dash-add-patient-btn" onClick={() => setShowAddModal(true)}>
-              <UserPlus size={18} />
-              Add Patient
-            </button>
-          </div>
-        </div>
-
-        {/* Patient Details Table */}
-        <div className="dash-patient-section">
-          <div className="dash-patient-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Users size={20} style={{ color: 'var(--teal-400)' }} />
-              Patient Details
-            </h3>
-            <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-              Showing {filteredPatients.length} of {patients.length} patients
-            </span>
-          </div>
-
-          {apiError && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '12px 16px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertCircle size={18} />
-              {apiError}
-            </div>
-          )}
-
-          <div className="dash-table-container" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', overflowY: 'auto', boxShadow: 'var(--shadow-card)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '1rem' }}>
-              <thead>
-                <tr style={{ background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '0.84rem', letterSpacing: '0.05em' }}>
-                  <th style={{ padding: '16px 20px', fontWeight: '800' }}>Patient ID</th>
-                  <th style={{ padding: '16px 20px', fontWeight: '800' }}>Name</th>
-                  <th style={{ padding: '16px 20px', fontWeight: '800' }}>NIC Number</th>
-                  <th style={{ padding: '16px 20px', fontWeight: '800' }}>Gender</th>
-                  <th style={{ padding: '16px 20px', fontWeight: '800' }}>Contact Number</th>
-                  <th style={{ padding: '16px 20px', textAlign: 'center', fontWeight: '800' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPatients.length > 0 ? (
-                  filteredPatients.map((patient) => (
-                    <tr key={patient._id || patient.PatientRegID} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s ease' }}>
-                      <td style={{ padding: '16px 20px', fontWeight: '800', color: 'var(--teal-400)', fontSize: '1.02rem' }}>{patient.PatientRegID}</td>
-                      <td style={{ padding: '16px 20px', fontWeight: '700', color: 'var(--text-main)', fontSize: '1.02rem' }}>{patient.FullName}</td>
-                      <td style={{ padding: '16px 20px', fontWeight: '700', color: 'var(--text-main)', fontSize: '1.02rem' }}>{patient.NICNumber || 'N/A'}</td>
-                      <td style={{ padding: '16px 20px', fontWeight: '700', color: 'var(--text-main)', fontSize: '1.02rem' }}>{patient.Gender}</td>
-                      <td style={{ padding: '16px 20px', fontWeight: '700', color: 'var(--text-main)', fontSize: '1.02rem' }}>{patient.ContactNumber}</td>
-                      <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                          <button
-                            className="dash-search-btn"
-                            style={{ padding: '8px 18px', fontSize: '0.9rem', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '7px' }}
-                            onClick={() => handleOpenAddAppointmentModal(patient)}
-                          >
-                            <Calendar size={16} />
-                            Add Appointment
-                          </button>
-                          <button
-                            className="icon-btn"
-                            style={{
-                              width: '38px',
-                              height: '38px',
-                              borderRadius: '10px',
-                              background: 'rgba(2, 132, 199, 0.18)',
-                              color: '#0284c7',
-                              border: '1px solid rgba(2, 132, 199, 0.35)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.2s ease'
-                            }}
-                            title="Edit Contact Number"
-                            onClick={() => handleOpenEditModal(patient)}
-                          >
-                            <Pencil size={18} />
-                          </button>
-                          <button
-                            className="icon-btn"
-                            style={{
-                              width: '38px',
-                              height: '38px',
-                              borderRadius: '10px',
-                              background: 'rgba(239, 68, 68, 0.15)',
-                              color: '#ef4444',
-                              border: '1px solid rgba(239, 68, 68, 0.35)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              marginLeft: '6px',
-                              transition: 'all 0.2s ease'
-                            }}
-                            title="Delete Patient Record"
-                            onClick={() => handleOpenDeleteModal(patient)}
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '1.02rem' }}>
-                      {isLoading ? 'Loading patient details...' : searchQuery ? `No patient matches found for "${searchQuery}".` : 'No patient records registered yet.'}
-                    </td>
-                  </tr>
+              {/* Center Search Bar & Search/Refresh Buttons */}
+              <div className="dash-search-center-group" style={{ flex: 1, maxWidth: '640px' }}>
+                <div className="dash-search-input-wrapper">
+                  <Search size={18} className="dash-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search by Patient Reg ID or Patient Name..."
+                    value={apptSearchQuery}
+                    onChange={(e) => setApptSearchQuery(e.target.value)}
+                    className="dash-search-input"
+                  />
+                </div>
+                {apptSearchQuery && (
+                  <button
+                    onClick={() => setApptSearchQuery('')}
+                    className="back-btn"
+                    style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}
+                  >
+                    Clear
+                  </button>
                 )}
-              </tbody>
-            </table>
+                <button
+                  onClick={fetchAllAppointments}
+                  disabled={isLoadingAppointments}
+                  className="dash-search-btn"
+                  style={{ padding: '10px 20px', fontSize: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  title="Refresh Appointments"
+                >
+                  <RefreshCw size={16} className={isLoadingAppointments ? 'spin-icon' : ''} />
+                  {isLoadingAppointments ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
+
+              {/* Right Corner Spacer */}
+              <div className="dash-toolbar-right-group" />
+            </div>
+
+            {appointmentsError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '14px 18px', borderRadius: '14px', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <AlertCircle size={20} />
+                {appointmentsError}
+              </div>
+            )}
+
+            {/* Requirement 01: 3 Parallel Columns (Pending, Inprogress, Completed) */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '24px',
+              alignItems: 'start'
+            }}>
+
+              {/* 01. PENDING APPOINTMENTS COLUMN - COLOR YELLOW (Get_All_Pending_Appointments) */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1.5px solid rgba(245, 158, 11, 0.4)',
+                borderRadius: '22px',
+                padding: '22px',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px'
+              }}>
+                {/* Column Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(245, 158, 11, 0.18)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Clock size={22} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)' }}>Pending Appointments</h4>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>Get_All_Pending_Appointments</span>
+                    </div>
+                  </div>
+                  <span style={{
+                    background: 'rgba(245, 158, 11, 0.22)',
+                    color: '#f59e0b',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.88rem',
+                    fontWeight: '800'
+                  }}>
+                    {filterAppointments(pendingAppointments).length}
+                  </span>
+                </div>
+
+                {/* List of Pending Appointments */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '720px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {isLoadingAppointments ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                      Loading pending appointments...
+                    </div>
+                  ) : filterAppointments(pendingAppointments).length > 0 ? (
+                    filterAppointments(pendingAppointments).map((appt) => {
+                      const patientObj = getPatientDetails(appt.PatientID);
+                      const doctorObj = getDoctorDetails(appt.DoctorID);
+
+                      return (
+                        <div key={appt._id} style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '18px',
+                          padding: '18px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          {/* Top Badge Row - Date badge yellow */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)', padding: '3px 10px', borderRadius: '8px' }}>
+                              {appt.createdAt ? new Date(appt.createdAt).toLocaleDateString() : 'Today'}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '3px 10px', borderRadius: '8px' }}>
+                              Pending
+                            </span>
+                          </div>
+
+                          {/* Appointment Details: ONLY Patient Reg ID, Doctor Name, Room Number */}
+                          <div style={{ background: 'rgba(245, 158, 11, 0.06)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: '800' }}>
+                                PATIENT REG ID
+                              </span>
+                              <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#f59e0b', fontFamily: 'var(--font-heading)' }}>
+                                {patientObj?.PatientRegID || appt.PatientID}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Doctor Name:</span>
+                              <strong style={{ color: 'var(--text-main)' }}>Dr. {doctorObj?.FullName || appt.DoctorID}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Room Number:</span>
+                              <strong style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.18)', padding: '2px 10px', borderRadius: '6px', fontSize: '0.86rem' }}>
+                                Room {doctorObj?.RoomNumber || 'N/A'}
+                              </strong>
+                            </div>
+                          </div>
+
+                          {/* Bottom Row: Delete Button */}
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', paddingTop: '4px' }}>
+                            <button
+                              onClick={() => handleOpenDeleteApptModal(appt)}
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.16)',
+                                color: '#ef4444',
+                                border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                                padding: '8px 16px',
+                                borderRadius: '12px',
+                                fontSize: '0.86rem',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '7px',
+                                boxShadow: '0 2px 10px rgba(239, 68, 68, 0.2)',
+                                transition: 'all 0.2s ease'
+                              }}
+                              title="Delete Appointment (Delete_Appointment)"
+                            >
+                              <Trash2 size={15} />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.92rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                      {apptSearchQuery ? `No pending appointments found matching "${apptSearchQuery}".` : 'No pending appointments in queue.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 02. INPROGRESS APPOINTMENTS COLUMN - COLOR BLUE (Get_All_Inprogress_Appointments) */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1.5px solid rgba(2, 132, 199, 0.4)',
+                borderRadius: '22px',
+                padding: '22px',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px'
+              }}>
+                {/* Column Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(2, 132, 199, 0.18)', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Stethoscope size={22} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)' }}>In-Progress Appointments</h4>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>Get_All_Inprogress_Appointments</span>
+                    </div>
+                  </div>
+                  <span style={{
+                    background: 'rgba(2, 132, 199, 0.22)',
+                    color: '#0284c7',
+                    border: '1px solid rgba(2, 132, 199, 0.4)',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.88rem',
+                    fontWeight: '800'
+                  }}>
+                    {filterAppointments(inprogressAppointments).length}
+                  </span>
+                </div>
+
+                {/* List of In-Progress Appointments */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '720px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {isLoadingAppointments ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                      Loading in-progress appointments...
+                    </div>
+                  ) : filterAppointments(inprogressAppointments).length > 0 ? (
+                    filterAppointments(inprogressAppointments).map((appt) => {
+                      const patientObj = getPatientDetails(appt.PatientID);
+                      const doctorObj = getDoctorDetails(appt.DoctorID);
+
+                      return (
+                        <div key={appt._id} style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '18px',
+                          padding: '18px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          {/* Top Badge Row */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#0284c7', background: 'rgba(2, 132, 199, 0.15)', padding: '3px 10px', borderRadius: '8px' }}>
+                              {appt.createdAt ? new Date(appt.createdAt).toLocaleDateString() : 'Today'}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#0284c7', background: 'rgba(2, 132, 199, 0.2)', border: '1px solid rgba(2, 132, 199, 0.35)', padding: '3px 10px', borderRadius: '8px' }}>
+                              In Progress
+                            </span>
+                          </div>
+
+                          {/* Appointment Details: ONLY Patient Reg ID, Doctor Name, Room Number */}
+                          <div style={{ background: 'rgba(2, 132, 199, 0.06)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(2, 132, 199, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: '800' }}>
+                                PATIENT REG ID
+                              </span>
+                              <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#0284c7', fontFamily: 'var(--font-heading)' }}>
+                                {patientObj?.PatientRegID || appt.PatientID}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Doctor Name:</span>
+                              <strong style={{ color: 'var(--text-main)' }}>Dr. {doctorObj?.FullName || appt.DoctorID}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Room Number:</span>
+                              <strong style={{ color: '#0284c7', background: 'rgba(2, 132, 199, 0.18)', padding: '2px 10px', borderRadius: '6px', fontSize: '0.86rem' }}>
+                                Room {doctorObj?.RoomNumber || 'N/A'}
+                              </strong>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.92rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                      {apptSearchQuery ? `No in-progress appointments found matching "${apptSearchQuery}".` : 'No in-progress appointments right now.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 03. COMPLETED APPOINTMENTS COLUMN (Get_All_Completed_Appointments) */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1.5px solid rgba(16, 185, 129, 0.35)',
+                borderRadius: '22px',
+                padding: '22px',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px'
+              }}>
+                {/* Column Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(16, 185, 129, 0.18)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <CheckCircle2 size={22} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)' }}>Completed Appointments</h4>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>Get_All_Completed_Appointments</span>
+                    </div>
+                  </div>
+                  <span style={{
+                    background: 'rgba(16, 185, 129, 0.22)',
+                    color: '#10b981',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.88rem',
+                    fontWeight: '800'
+                  }}>
+                    {filterAppointments(completedAppointments).length}
+                  </span>
+                </div>
+
+                {/* List of Completed Appointments */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '720px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {isLoadingAppointments ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                      Loading completed appointments...
+                    </div>
+                  ) : filterAppointments(completedAppointments).length > 0 ? (
+                    filterAppointments(completedAppointments).map((appt) => {
+                      const patientObj = getPatientDetails(appt.PatientID);
+                      const doctorObj = getDoctorDetails(appt.DoctorID);
+
+                      return (
+                        <div key={appt._id} style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '18px',
+                          padding: '18px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          {/* Top Badge Row */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '3px 10px', borderRadius: '8px' }}>
+                              {appt.createdAt ? new Date(appt.createdAt).toLocaleDateString() : 'Today'}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#10b981', background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '3px 10px', borderRadius: '8px' }}>
+                              Completed
+                            </span>
+                          </div>
+
+                          {/* Appointment Details: ONLY Patient Reg ID, Doctor Name, Room Number */}
+                          <div style={{ background: 'rgba(16, 185, 129, 0.06)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: '800' }}>
+                                PATIENT REG ID
+                              </span>
+                              <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#10b981', fontFamily: 'var(--font-heading)' }}>
+                                {patientObj?.PatientRegID || appt.PatientID}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Doctor Name:</span>
+                              <strong style={{ color: 'var(--text-main)' }}>Dr. {doctorObj?.FullName || appt.DoctorID}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Room Number:</span>
+                              <strong style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.18)', padding: '2px 10px', borderRadius: '6px', fontSize: '0.86rem' }}>
+                                Room {doctorObj?.RoomNumber || 'N/A'}
+                              </strong>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.92rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                      {apptSearchQuery ? `No completed appointments found matching "${apptSearchQuery}".` : 'No completed appointments recorded yet.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
+        ) : activeTab === 'doctors' ? (
+          /* ========================================================= */
+          /* MENU DOCTOR PAGE - 4 BOXES PER ROW & SORTED DOCTORS       */
+          /* ========================================================= */
+          <div className="dash-doctors-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {/* Search & Refresh Toolbar */}
+            <div className="dash-search-toolbar">
+              <div className="dash-toolbar-left-space" />
+
+              <div className="dash-search-center-group" style={{ flex: 1, maxWidth: '640px' }}>
+                <div className="dash-search-input-wrapper">
+                  <Search size={18} className="dash-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search doctor by Name, Room Number or Specialization..."
+                    value={doctorSearchQuery}
+                    onChange={(e) => setDoctorSearchQuery(e.target.value)}
+                    className="dash-search-input"
+                  />
+                </div>
+                {doctorSearchQuery && (
+                  <button
+                    onClick={() => setDoctorSearchQuery('')}
+                    className="back-btn"
+                    style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  onClick={fetchAllDoctorDetails}
+                  disabled={isLoadingDoctors}
+                  className="dash-search-btn"
+                  style={{ padding: '10px 20px', fontSize: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  title="Refresh Doctors"
+                >
+                  <RefreshCw size={16} className={isLoadingDoctors ? 'spin-icon' : ''} />
+                  {isLoadingDoctors ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
+
+              <div className="dash-toolbar-right-group" />
+            </div>
+
+            {doctorFetchError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '14px 18px', borderRadius: '14px', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <AlertCircle size={20} />
+                {doctorFetchError}
+              </div>
+            )}
+
+            {/* Doctors Grid - 4 Boxes Per Line */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '20px',
+              paddingBottom: '20px'
+            }}>
+              {filteredAndSortedDoctors.length > 0 ? (
+                filteredAndSortedDoctors.map((doc) => {
+                  const isAvailable = doc.InHospitalAvailability === true;
+                  return (
+                    <div
+                      key={doc._id}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: isAvailable
+                          ? '1.5px solid rgba(45, 212, 191, 0.45)'
+                          : '1.5px solid rgba(239, 68, 68, 0.45)',
+                        borderRadius: '20px',
+                        padding: '20px',
+                        boxShadow: 'var(--shadow-card)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '16px',
+                        transition: 'all 0.25s ease'
+                      }}
+                    >
+                      {/* Top Bar: Icon & Availability Badge */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '14px',
+                          background: isAvailable ? 'rgba(45, 212, 191, 0.18)' : 'rgba(239, 68, 68, 0.18)',
+                          color: isAvailable ? 'var(--teal-400)' : '#dc2626',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <Stethoscope size={22} />
+                        </div>
+                        <span style={{
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.78rem',
+                          fontWeight: '800',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.03em',
+                          background: isAvailable ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.15)',
+                          color: isAvailable ? '#10b981' : '#dc2626',
+                          border: isAvailable ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(239, 68, 68, 0.35)'
+                        }}>
+                          {isAvailable ? 'In-Hospital Available' : 'Not Available'}
+                        </span>
+                      </div>
+
+                      {/* Doctor FullName & Specialization */}
+                      <div>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1.18rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                          Dr. {doc.FullName}
+                        </h4>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--teal-400)', fontWeight: '700' }}>
+                          {doc.Specialization || doc.Department || 'General Physician'}
+                        </span>
+                      </div>
+
+                      {/* Info Details: RoomNumber & NoOfAppointments */}
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px',
+                        padding: '12px 14px',
+                        borderRadius: '14px',
+                        background: 'var(--bg-glass)',
+                        border: '1px solid var(--border-color)'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem' }}>
+                          <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Room Number:</span>
+                          <strong style={{ color: 'var(--teal-400)', fontWeight: '800', fontSize: '0.95rem' }}>
+                            Room {doc.RoomNumber || 'N/A'}
+                          </strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem' }}>
+                          <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>No. of Appointments:</span>
+                          <strong style={{ color: 'var(--teal-400)', fontWeight: '800', fontSize: '0.95rem' }}>
+                            {typeof doc.NoOfAppointments === 'number' ? doc.NoOfAppointments : 0}
+                          </strong>
+                        </div>
+                      </div>
+
+                      {/* StopAppointments Status Badge */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingTop: '10px',
+                        borderTop: '1px solid var(--border-color)',
+                        fontSize: '0.84rem'
+                      }}>
+                        <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Stop Appointments:</span>
+                        {doc.StopAppointments ? (
+                          <span style={{
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            color: '#dc2626',
+                            border: '1px solid rgba(239, 68, 68, 0.35)',
+                            padding: '3px 10px',
+                            borderRadius: '14px',
+                            fontWeight: '800',
+                            fontSize: '0.78rem'
+                          }}>
+                            Stopped
+                          </span>
+                        ) : (
+                          <span style={{
+                            background: 'rgba(16, 185, 129, 0.18)',
+                            color: '#10b981',
+                            border: '1px solid rgba(16, 185, 129, 0.4)',
+                            padding: '3px 10px',
+                            borderRadius: '14px',
+                            fontWeight: '800',
+                            fontSize: '0.78rem'
+                          }}>
+                            Active
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{
+                  gridColumn: 'span 4',
+                  textAlign: 'center',
+                  padding: '48px',
+                  background: 'var(--bg-card)',
+                  borderRadius: '18px',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-muted)',
+                  fontSize: '1rem'
+                }}>
+                  {isLoadingDoctors ? 'Loading doctor details...' : doctorSearchQuery ? `No doctor matches found for "${doctorSearchQuery}".` : 'No doctor records found.'}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : activeTab === 'settings' ? (
+          /* ========================================================= */
+          /* MENU SETTINGS PAGE - RECEPTIONIST DETAILS & 3 BUTTONS      */
+          /* ========================================================= */
+          <div className="dash-settings-section" style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {/* Header Toolbar */}
+            <div className="dash-search-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Settings size={22} style={{ color: 'var(--teal-400)' }} />
+                Account Settings & Profile Details
+              </h3>
+
+              <button
+                onClick={fetchMyReceptionistDetails}
+                disabled={isLoadingMyDetails}
+                className="dash-search-btn"
+                style={{ padding: '8px 18px', fontSize: '0.88rem', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                title="Refresh Profile Details"
+              >
+                <RefreshCw size={15} className={isLoadingMyDetails ? 'spin-icon' : ''} />
+                {isLoadingMyDetails ? 'Refreshing...' : 'Refresh Details'}
+              </button>
+            </div>
+
+            {myDetailsError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '14px 18px', borderRadius: '14px', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <AlertCircle size={20} />
+                {myDetailsError}
+              </div>
+            )}
+
+            {/* Profile Overview Card */}
+            <div style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '22px',
+              padding: '28px',
+              boxShadow: 'var(--shadow-card)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px'
+            }}>
+              {/* Profile Top Summary Banner */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                <div style={{
+                  width: '72px',
+                  height: '72px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                  color: '#ffffff',
+                  fontSize: '1.8rem',
+                  fontWeight: '800',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 6px 20px rgba(13, 148, 136, 0.4)'
+                }}>
+                  {getInitials(myDetails?.FullName || user?.FullName || 'Receptionist')}
+                </div>
+                <div>
+                  <h3 style={{ margin: '0 0 6px 0', fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myDetails?.FullName || user?.FullName || 'Receptionist'}
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.88rem', color: 'var(--teal-400)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Mail size={15} />
+                      {myDetails?.Email || user?.Email || 'receptionist@apexhealth.org'}
+                    </span>
+                    <span style={{
+                      background: 'rgba(45, 212, 191, 0.15)',
+                      color: '#2dd4bf',
+                      border: '1px solid rgba(45, 212, 191, 0.35)',
+                      padding: '3px 12px',
+                      borderRadius: '16px',
+                      fontSize: '0.8rem',
+                      fontWeight: '800'
+                    }}>
+                      Role: {myDetails?.Role || 'Receptionist'}
+                    </span>
+                    <span style={{
+                      background: myDetails?.Approve ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                      color: myDetails?.Approve ? '#10b981' : '#f59e0b',
+                      border: myDetails?.Approve ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)',
+                      padding: '3px 12px',
+                      borderRadius: '16px',
+                      fontSize: '0.8rem',
+                      fontWeight: '800'
+                    }}>
+                      Status: {myDetails?.Approve ? 'Approved ✅' : 'Pending Approval ⏳'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Details Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '20px'
+              }}>
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myDetails?.FullName || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Address</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myDetails?.Email || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone Number</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--teal-400)' }}>
+                    {myDetails?.PhoneNumber || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>NIC / Passport Number</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myDetails?.NICNumber || myDetails?.NICPassportNumber || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Employee ID</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myDetails?.EmployeeID || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gender</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myDetails?.Gender || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date of Birth</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myDetails?.DateOfBirth ? myDetails.DateOfBirth.split('T')[0] : 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Department</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myDetails?.Department || 'Reception / Desk Support'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Languages</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {Array.isArray(myDetails?.Languages)
+                      ? myDetails.Languages.map(l => (typeof l === 'object' && l?.Language ? l.Language : l)).filter(Boolean).join(', ') || 'N/A'
+                      : (myDetails?.Languages || 'N/A')}
+                  </h4>
+                </div>
+              </div>
+
+              {/* 3 Buttons Down */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                paddingTop: '20px',
+                borderTop: '1px solid var(--border-color)',
+                flexWrap: 'wrap'
+              }}>
+                {/* 02. First Button: Update Phone Number */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewMyPhone(myDetails?.PhoneNumber || '');
+                    setMyPhoneError('');
+                    setMyPhoneSuccess('');
+                    setShowMyPhoneModal(true);
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    fontSize: '0.92rem',
+                    cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    boxShadow: '0 4px 14px rgba(13, 148, 136, 0.35)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Phone size={18} />
+                  Update Phone Number
+                </button>
+
+                {/* 03. Second Button: Update Password */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOldPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    setShowOldPassword(false);
+                    setShowNewPassword(false);
+                    setShowConfirmPassword(false);
+                    setMyPasswordError('');
+                    setMyPasswordSuccess('');
+                    setShowMyPasswordModal(true);
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    fontSize: '0.92rem',
+                    cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    boxShadow: '0 4px 14px rgba(13, 148, 136, 0.35)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Key size={18} />
+                  Update Password
+                </button>
+
+                {/* 04. Third Button: Delete Account */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteAccountPassword('');
+                    setDeleteAccountError('');
+                    setShowDeleteAccountModal(true);
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    fontSize: '0.92rem',
+                    cursor: 'pointer',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    color: '#ef4444',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    marginLeft: 'auto',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Trash2 size={18} />
+                  Delete Account
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ========================================================= */
+          /* MAIN PATIENT DETAILS TABLE DASHBOARD VIEW                 */
+          /* ========================================================= */
+          <>
+            {/* Search Bar & Add Patient Button Toolbar Under Welcome Back Box */}
+            <div className="dash-search-toolbar">
+              {/* Left Spacer so search box is dead center */}
+              <div className="dash-toolbar-left-space" />
+
+              {/* Center Search Bar & Search Button */}
+              <div className="dash-search-center-group">
+                <div className="dash-search-input-wrapper">
+                  <Search size={18} className="dash-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search by Patient Name or ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="dash-search-input"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                </div>
+                <button className="dash-search-btn" onClick={handleSearch}>
+                  <Search size={16} />
+                  Search
+                </button>
+              </div>
+
+              {/* Right Corner: Add Patient Button */}
+              <div className="dash-toolbar-right-group">
+                <button className="dash-add-patient-btn" onClick={() => setShowAddModal(true)}>
+                  <UserPlus size={18} />
+                  Add Patient
+                </button>
+              </div>
+            </div>
+
+            {/* Patient Details Table */}
+            <div className="dash-patient-section">
+              <div className="dash-patient-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Users size={20} style={{ color: 'var(--teal-400)' }} />
+                  Patient Details
+                </h3>
+                <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                  Showing {filteredPatients.length} of {patients.length} patients
+                </span>
+              </div>
+
+              {apiError && (
+                <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '12px 16px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AlertCircle size={18} />
+                  {apiError}
+                </div>
+              )}
+
+              <div className="dash-table-container" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', overflowY: 'auto', boxShadow: 'var(--shadow-card)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '1rem' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '0.84rem', letterSpacing: '0.05em' }}>
+                      <th style={{ padding: '16px 20px', fontWeight: '800' }}>Patient ID</th>
+                      <th style={{ padding: '16px 20px', fontWeight: '800' }}>Name</th>
+                      <th style={{ padding: '16px 20px', fontWeight: '800' }}>NIC Number</th>
+                      <th style={{ padding: '16px 20px', fontWeight: '800' }}>Gender</th>
+                      <th style={{ padding: '16px 20px', fontWeight: '800' }}>Contact Number</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'center', fontWeight: '800' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredPatients.length > 0 ? (
+                      filteredPatients.map((patient) => (
+                        <tr key={patient._id || patient.PatientRegID} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s ease' }}>
+                          <td style={{ padding: '16px 20px', fontWeight: '800', color: 'var(--teal-400)', fontSize: '1.02rem' }}>{patient.PatientRegID}</td>
+                          <td style={{ padding: '16px 20px', fontWeight: '700', color: 'var(--text-main)', fontSize: '1.02rem' }}>{patient.FullName}</td>
+                          <td style={{ padding: '16px 20px', fontWeight: '700', color: 'var(--text-main)', fontSize: '1.02rem' }}>{patient.NICNumber || 'N/A'}</td>
+                          <td style={{ padding: '16px 20px', fontWeight: '700', color: 'var(--text-main)', fontSize: '1.02rem' }}>{patient.Gender}</td>
+                          <td style={{ padding: '16px 20px', fontWeight: '700', color: 'var(--text-main)', fontSize: '1.02rem' }}>{patient.ContactNumber}</td>
+                          <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                              <button
+                                className="dash-search-btn"
+                                style={{ padding: '8px 18px', fontSize: '0.9rem', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '7px' }}
+                                onClick={() => handleOpenAddAppointmentModal(patient)}
+                              >
+                                <Calendar size={16} />
+                                Add Appointment
+                              </button>
+                              <button
+                                className="icon-btn"
+                                style={{
+                                  width: '38px',
+                                  height: '38px',
+                                  borderRadius: '10px',
+                                  background: 'rgba(2, 132, 199, 0.18)',
+                                  color: '#0284c7',
+                                  border: '1px solid rgba(2, 132, 199, 0.35)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                title="Edit Contact Number"
+                                onClick={() => handleOpenEditModal(patient)}
+                              >
+                                <Pencil size={18} />
+                              </button>
+                              <button
+                                className="icon-btn"
+                                style={{
+                                  width: '38px',
+                                  height: '38px',
+                                  borderRadius: '10px',
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  color: '#ef4444',
+                                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  marginLeft: '6px',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                title="Delete Patient Record"
+                                onClick={() => handleOpenDeleteModal(patient)}
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '1.02rem' }}>
+                          {isLoading ? 'Loading patient details...' : searchQuery ? `No patient matches found for "${searchQuery}".` : 'No patient records registered yet.'}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </main>
 
       {/* Modal for Adding New Patient */}
@@ -1176,20 +2490,20 @@ export default function ReceptionistDashboard({ user, onLogout, theme, onToggleT
                         }}>
                           <Stethoscope size={22} />
                         </div>
-                          <div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                              Dr. {doc.FullName}
-                              <span style={{ fontSize: '0.98rem', fontWeight: '800', color: '#2dd4bf', background: 'rgba(45, 212, 191, 0.2)', border: '1px solid rgba(45, 212, 191, 0.4)', padding: '4px 12px', borderRadius: '8px' }}>
-                                Room: {doc.RoomNumber || 'N/A'}
-                              </span>
-                            </div>
-                            <div style={{ fontSize: '1.02rem', fontWeight: '700', color: 'var(--text-main)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span>Appointments:</span>
-                              <strong style={{ color: !doc.StopAppointments ? '#10b981' : '#ef4444', fontSize: '1.08rem', fontWeight: '900', background: !doc.StopAppointments ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.18)', padding: '3px 10px', borderRadius: '8px', border: !doc.StopAppointments ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(239, 68, 68, 0.35)' }}>
-                                {!doc.StopAppointments ? `Active (${doc.NoOfAppointments ?? 0})` : `Stopped (${doc.NoOfAppointments ?? 0})`}
-                              </strong>
-                            </div>
+                        <div>
+                          <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                            Dr. {doc.FullName}
+                            <span style={{ fontSize: '0.98rem', fontWeight: '800', color: '#2dd4bf', background: 'rgba(45, 212, 191, 0.2)', border: '1px solid rgba(45, 212, 191, 0.4)', padding: '4px 12px', borderRadius: '8px' }}>
+                              Room: {doc.RoomNumber || 'N/A'}
+                            </span>
                           </div>
+                          <div style={{ fontSize: '1.02rem', fontWeight: '700', color: 'var(--text-main)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>Appointments:</span>
+                            <strong style={{ color: !doc.StopAppointments ? '#10b981' : '#ef4444', fontSize: '1.08rem', fontWeight: '900', background: !doc.StopAppointments ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.18)', padding: '3px 10px', borderRadius: '8px', border: !doc.StopAppointments ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(239, 68, 68, 0.35)' }}>
+                              {!doc.StopAppointments ? `Active (${doc.NoOfAppointments ?? 0})` : `Stopped (${doc.NoOfAppointments ?? 0})`}
+                            </strong>
+                          </div>
+                        </div>
                       </div>
 
                       <button
@@ -1403,6 +2717,390 @@ export default function ReceptionistDashboard({ user, onLogout, theme, onToggleT
                 Print Token
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Appointment Confirmation Modal Window */}
+      {showDeleteApptModal && apptToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '460px', textAlign: 'center', padding: '36px', borderRadius: '22px' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.18)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+              <Trash2 size={32} />
+            </div>
+
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.35rem', color: 'var(--text-main)', fontWeight: '800' }}>
+              Delete Pending Appointment?
+            </h3>
+
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0 0 24px 0', lineHeight: 1.5 }}>
+              Are you sure you want to delete this pending appointment for{' '}
+              <strong style={{ color: 'var(--text-main)' }}>
+                {getPatientDetails(apptToDelete.PatientID)?.FullName || 'Patient ID: ' + apptToDelete.PatientID}
+              </strong>{' '}
+              (<span style={{ color: 'var(--teal-400)', fontWeight: '700' }}>{getPatientDetails(apptToDelete.PatientID)?.PatientRegID || apptToDelete.PatientID}</span>) assigned to{' '}
+              <strong style={{ color: 'var(--text-main)' }}>
+                Dr. {getDoctorDetails(apptToDelete.DoctorID)?.FullName || apptToDelete.DoctorID}
+              </strong>?
+            </p>
+
+            <div style={{ display: 'flex', gap: '14px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="back-btn"
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', fontSize: '0.95rem', justifyContent: 'center' }}
+                onClick={() => {
+                  setShowDeleteApptModal(false);
+                  setApptToDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isDeletingAppt}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  fontWeight: '800',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onClick={handleConfirmDeleteAppt}
+              >
+                {isDeletingAppt ? 'Deleting...' : 'OK'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 01. UPDATE PHONE NUMBER MODAL */}
+      {showMyPhoneModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '440px', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Phone size={20} style={{ color: 'var(--teal-400)' }} />
+                Update Phone Number
+              </h3>
+              <button className="icon-btn" onClick={() => setShowMyPhoneModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {myPhoneError && (
+              <div className="error-banner" style={{ marginBottom: '16px', fontSize: '0.88rem' }}>
+                <AlertCircle size={16} />
+                {myPhoneError}
+              </div>
+            )}
+
+            {myPhoneSuccess && (
+              <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '10px 14px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={16} />
+                {myPhoneSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateMyPhoneSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  New Phone Number (10 Digits)
+                </label>
+                <div className="dash-search-input-wrapper" style={{ height: '46px' }}>
+                  <Phone size={18} className="dash-search-icon" />
+                  <input
+                    type="text"
+                    maxLength={10}
+                    placeholder="e.g. 0771234567"
+                    value={newMyPhone}
+                    onChange={(e) => setNewMyPhone(e.target.value.replace(/\D/g, ''))}
+                    className="dash-search-input"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button type="button" className="back-btn" onClick={() => setShowMyPhoneModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="dash-search-btn" disabled={isUpdatingMyPhone}>
+                  {isUpdatingMyPhone ? 'Updating...' : 'Save Phone Number'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 02. UPDATE PASSWORD MODAL */}
+      {showMyPasswordModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '460px', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Key size={20} style={{ color: 'var(--teal-400)' }} />
+                Update Password
+              </h3>
+              <button className="icon-btn" onClick={() => setShowMyPasswordModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {myPasswordError && (
+              <div className="error-banner" style={{ marginBottom: '16px', fontSize: '0.88rem' }}>
+                <AlertCircle size={16} />
+                {myPasswordError}
+              </div>
+            )}
+
+            {myPasswordSuccess && (
+              <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '10px 14px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={16} />
+                {myPasswordSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateMyPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  Old Password
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showOldPassword ? 'text' : 'password'}
+                    placeholder="Enter current password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    style={{
+                      background: 'var(--bg-input)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '12px 44px 12px 16px',
+                      color: 'var(--text-main)',
+                      fontSize: '0.92rem',
+                      width: '100%'
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                    title={showOldPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  New Password (Min 6 Characters)
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    style={{
+                      background: 'var(--bg-input)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '12px 44px 12px 16px',
+                      color: 'var(--text-main)',
+                      fontSize: '0.92rem',
+                      width: '100%'
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                    title={showNewPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  Confirm New Password
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Re-enter new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    style={{
+                      background: 'var(--bg-input)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '12px 44px 12px 16px',
+                      color: 'var(--text-main)',
+                      fontSize: '0.92rem',
+                      width: '100%'
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                    title={showConfirmPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button type="button" className="back-btn" onClick={() => setShowMyPasswordModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="dash-search-btn" disabled={isUpdatingMyPassword}>
+                  {isUpdatingMyPassword ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 03. DELETE ACCOUNT MODAL */}
+      {showDeleteAccountModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '440px', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Trash2 size={20} />
+                Delete Account Confirmation
+              </h3>
+              <button className="icon-btn" onClick={() => setShowDeleteAccountModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '12px 16px', borderRadius: '12px', marginBottom: '18px', fontSize: '0.88rem' }}>
+              <strong>Warning:</strong> Deleting your account will permanently remove your receptionist credentials from the system.
+            </div>
+
+            {deleteAccountError && (
+              <div className="error-banner" style={{ marginBottom: '16px', fontSize: '0.88rem' }}>
+                <AlertCircle size={16} />
+                {deleteAccountError}
+              </div>
+            )}
+
+            <form onSubmit={handleDeleteMyAccountSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  Enter Password to Confirm Deletion
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showDeletePassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    value={deleteAccountPassword}
+                    onChange={(e) => setDeleteAccountPassword(e.target.value)}
+                    style={{
+                      background: 'var(--bg-input)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '12px 44px 12px 16px',
+                      color: 'var(--text-main)',
+                      fontSize: '0.92rem',
+                      width: '100%'
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeletePassword(!showDeletePassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                    title={showDeletePassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showDeletePassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button type="button" className="back-btn" onClick={() => setShowDeleteAccountModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    cursor: 'pointer'
+                  }}
+                  disabled={isDeletingAccount}
+                >
+                  {isDeletingAccount ? 'Deleting...' : 'Delete My Account'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

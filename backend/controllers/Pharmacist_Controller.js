@@ -260,7 +260,8 @@ exports.Get_Pharmacist_Details = async (req, res) => {
 
 exports.Delete_Pharmacist = async (req, res) => {
     try {
-        const { pharmacistId, Password } = req.params;
+        const { pharmacistId } = req.params;
+        const { Password } = req.body;
 
         // --- Check if Pharmacist exists --- //
         const existingPharmacist = await pharmacist.findById(pharmacistId);
@@ -361,6 +362,49 @@ exports.Update_Password = async (req, res) => {
         await existingPharmacist.save();
 
         res.status(200).json({ message: "Pharmacist password updated", pharmacistDetails: existingPharmacist });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 09. Forgot Password //
+//---------------------//
+
+exports.Forgot_Password = async (req, res) => {
+    try {
+        const { Email, NICNumber, NewPassword, OTP } = req.body;
+
+        // --- Check if Pharmacist exists By email --- //
+        const existingPharmacist = await pharmacist.findOne({ Email });
+
+        if (!existingPharmacist) {
+            return res.status(404).json({ message: "Pharmacist not found" });
+        }
+
+        // --- Check if NICNumber matches existingPharmacist --- //
+        if (existingPharmacist.NICNumber !== NICNumber) {
+            return res.status(400).json({ message: "Invalid NIC Number" });
+        }
+
+        // --- Password Validation --- //
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Check OTP === 000000 --- //
+        if (OTP === "000000") {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // --- Hash Password And Save --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        existingPharmacist.Password = hashedPassword;
+        await existingPharmacist.save();
+
+        res.status(200).json({ message: "Pharmacist Password Updated", existingPharmacist });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }

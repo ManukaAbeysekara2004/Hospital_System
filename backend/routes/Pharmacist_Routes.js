@@ -28,4 +28,7 @@ router.patch('/update-phone-number/:pharmacistId', PharmacistController.Update_P
 // 08. Update Password //
 router.patch('/update-password/:pharmacistId', PharmacistController.Update_Password);
 
+// 09. Forgot Password //
+router.patch('/forgot-password', PharmacistController.Forgot_Password);
+
 module.exports = router;

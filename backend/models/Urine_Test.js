@@ -23,42 +23,42 @@ const urineTestSchema = new mongoose.Schema({
     CompleteStatus: {
         type: Boolean,
         default: false,
-        required: true
+        required: false
     },
 
     Color: {
         type: String,
-        required: true,
+        required: false,
         default: ""
     },
 
     Appearance: {
         type: String,
-        required: true,
+        required: false,
         default: ""
     },
 
     pH: {
         type: Number,
-        required: true,
+        required: false,
         default: 0.0
     },
 
     SpecificGravity: {
         type: Number,
-        required: true,
+        required: false,
         default: 0.0
     },
 
     Protein: {
         type: String,
-        required: true,
+        required: false,
         default: ""
     },
 
     Glucose: {
         type: String,
-        required: true,
+        required: false,
         default: ""
     },
 
@@ -71,13 +71,13 @@ const urineTestSchema = new mongoose.Schema({
     Fee: {
         type: Number,
         default: 1450,
-        required: true
+        required: false
     },
 
     PaidStatus: {
         type: Boolean,
         default: false,
-        required: true
+        required: false
     }
 
 }, { timestamps: true });

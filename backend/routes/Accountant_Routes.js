@@ -28,4 +28,7 @@ router.patch('/update-contact-number/:accountantId', AccountantController.Update
 // 08. Update Password //
 router.patch('/update-password/:accountantId', AccountantController.Update_Password);
 
+// 09. Forgot Password //
+router.patch('/forgot-password', AccountantController.Forgot_Password);
+
 module.exports = router;

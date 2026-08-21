@@ -32,4 +32,7 @@ router.get('/by-nurse/:NurseID', NurseWorksController.Get_Nurse_Work_By_NurseId)
 // 10. Get Nurse_Work By Patient_ID //
 router.get('/by-patient/:Patient_ID', NurseWorksController.Get_Nurse_Work_By_Patient_ID);
 
+// 11. Delete Nurse Work //
+router.delete('/delete/:NurseWorkID', NurseWorksController.Delete_Nurse_Work);
+
 module.exports = router;

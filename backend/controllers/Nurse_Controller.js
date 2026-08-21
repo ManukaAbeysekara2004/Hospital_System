@@ -338,7 +338,8 @@ exports.Get_Nurse_Details = async (req, res) => {
 
 exports.Delete_Nurse = async (req, res) => {
     try {
-        const { nurseId, Password } = req.params;
+        const { nurseId } = req.params;
+        const { Password } = req.body;
 
         // --- Check if Nurse exists --- //
         const existingNurse = await nurse.findById(nurseId);
@@ -435,6 +436,49 @@ exports.Update_Password = async (req, res) => {
         await existingNurse.save();
 
         res.status(200).json({ message: "Nurse password updated", nurseDetails: existingNurse });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 12. Forgot Password //
+//---------------------//
+
+exports.Forgot_Password = async (req, res) => {
+    try {
+        const { Email, NICNumber, NewPassword, OTP } = req.body;
+
+        // --- Check if Nurse exists By email --- //
+        const existingNurse = await nurse.findOne({ Email });
+
+        if (!existingNurse) {
+            return res.status(404).json({ message: "Nurse not found" });
+        }
+
+        // --- Check if NICNumber matches existingNurse --- //
+        if (existingNurse.NICNumber !== NICNumber) {
+            return res.status(400).json({ message: "Invalid NIC Number" });
+        }
+
+        // --- Password Validation --- //
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Check OTP === 000000 --- //
+        if (OTP === "000000") {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // --- Hash Password And Save --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        existingNurse.Password = hashedPassword;
+        await existingNurse.save();
+
+        res.status(200).json({ message: "Nurse Password Updated", existingNurse });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }

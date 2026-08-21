@@ -255,3 +255,60 @@ exports.get_Urine_Test_Details_By_PatientID = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 }
+
+
+// 11. Delete Blood Test //
+//-----------------------//
+
+exports.delete_Blood_Test = async (req, res) => {
+    try {
+        const { BloodTestID } = req.params;
+
+        // --- Find Blood test --- //
+        const Deleted_Blood_Test = await bloodTest.findById(BloodTestID);
+
+        if (!Deleted_Blood_Test) {
+            return res.status(404).json({ success: false, message: "Blood Test Not Found" });
+        }
+
+        // --- Check CompleteStatus true --- //
+        if(Deleted_Blood_Test.CompleteStatus){
+            return res.status(400).json({ success: false, message: "Blood Test Already Completed" });
+        }
+
+        // --- Delete Blood Test --- //
+        await bloodTest.findByIdAndDelete(BloodTestID);
+
+        res.status(200).json({ success: true, data: Deleted_Blood_Test });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+// 12. Delete Urine Test //
+//------------------------//
+
+exports.delete_Urine_Test = async (req, res) => {
+    try {
+        const { UrineTestID } = req.params;
+
+        // --- Find Urine test --- //
+        const Deleted_Urine_Test = await urineTest.findById(UrineTestID);
+
+        if (!Deleted_Urine_Test) {
+            return res.status(404).json({ success: false, message: "Urine Test Not Found" });
+        }
+
+        // --- Check CompleteStatus true --- //
+        if(Deleted_Urine_Test.CompleteStatus){
+            return res.status(400).json({ success: false, message: "Urine Test Already Completed" });
+        }
+
+        // --- Delete Deleted_Urine_Test --- //
+        await urineTest.findByIdAndDelete(UrineTestID);
+
+        res.status(200).json({ success: true, data: Deleted_Urine_Test });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+}

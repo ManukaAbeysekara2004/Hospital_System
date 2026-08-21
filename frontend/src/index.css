@@ -40,18 +40,24 @@
 
 [data-theme='light'] {
   --bg-main: #f8fafc;
-  --bg-card: rgba(255, 255, 255, 0.95);
-  --bg-glass: rgba(15, 23, 42, 0.02);
+  --bg-card: #ffffff;
+  --bg-glass: rgba(15, 23, 42, 0.03);
   --bg-input: #f1f5f9;
-  --border-color: #e2e8f0;
+  --border-color: #cbd5e1;
   --border-focus: #0284c7;
 
+  /* Teal / Medical Highlights re-defined for light mode contrast */
+  --teal-400: #0d9488;
+  --teal-500: #0f766e;
+  --teal-600: #115e59;
+  --teal-900: #ccfbf1;
+
   --text-main: #0f172a;
-  --text-muted: #64748b;
+  --text-muted: #475569;
   --text-inverse: #ffffff;
 
   --shadow-glow: 0 10px 30px -10px rgba(2, 132, 199, 0.15);
-  --shadow-card: 0 20px 40px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
 * {

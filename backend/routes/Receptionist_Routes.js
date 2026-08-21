@@ -28,4 +28,7 @@ router.patch('/update-phone/:receptionistId', ReceptionistController.Update_Phon
 // 08. Update Password //
 router.patch('/update-password/:receptionistId', ReceptionistController.Update_Password);
 
+// 09. Forgot Password //
+router.patch('/forgot-password', ReceptionistController.Forgot_Password);
+
 module.exports = router;

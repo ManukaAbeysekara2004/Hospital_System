@@ -114,6 +114,20 @@ exports.Update_Appointment_Status = async (req, res) => {
             });
         }
 
+        // --- Get The Doctor --- //
+        const existingDoctor = await doctor.findById(existingAppointment.DoctorID);
+        if (!existingDoctor) {
+            return res.status(404).json({
+                message: "Doctor not found"
+            });
+        }
+
+        // --- Check Appointment Status --- //
+        if (AppointmentStatus === "Completed") {
+            existingDoctor.NoOfAppointments -= 1;
+            await existingDoctor.save();
+        }
+
         // --- Update Appointment Status --- //
         existingAppointment.AppointmentStatus = AppointmentStatus;
         await existingAppointment.save();
@@ -312,6 +326,13 @@ exports.Delete_Appointment = async (req, res) => {
             });
         }
 
+        // --- Check Appointments Status If Inprogress or Completed --- //
+        if (existingAppointment.AppointmentStatus === "Completed") {
+            return res.status(400).json({
+                message: "Appointment cannot be deleted as it is not in pending state"
+            });
+        }
+        
         existingDoctor.NoOfAppointments -= 1;
         await existingDoctor.save();
 

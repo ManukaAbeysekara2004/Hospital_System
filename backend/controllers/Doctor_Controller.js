@@ -201,6 +201,7 @@ exports.Doctor_Login = async (req, res) => {
 
         // --- Change Availability to True --- //
         existingDoctor.InHospitalAvailability = true;
+        existingDoctor.StopAppointments = false;
         await existingDoctor.save();
 
         res.status(200).json({ message: "Login successful", existingDoctor });
@@ -224,8 +225,9 @@ exports.Doctor_Logout = async (req, res) => {
             return res.status(404).json({ message: "Doctor not found" });
         }
 
-        // --- Change Availability to False --- //
+        // --- Change Availability to False and Stop StopAppointments to True --- //
         existingDoctor.InHospitalAvailability = false;
+        existingDoctor.StopAppointments = true;
         await existingDoctor.save();
 
         res.status(200).json({ message: "Logout successful", existingDoctor });
@@ -368,7 +370,8 @@ exports.Get_Doctor_Details = async (req, res) => {
 
 exports.Delete_Doctor = async (req, res) => {
     try {
-        const { doctorId, Password } = req.params;
+        const { doctorId } = req.params;
+        const { Password } = req.body;
 
         // --- Check if Doctor exists --- //
         const existingDoctor = await doctor.findById(doctorId);
@@ -457,6 +460,52 @@ exports.Update_Password = async (req, res) => {
         await existingDoctor.save();
 
         res.status(200).json({ message: "Doctor Password Updated", existingDoctor });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// 13. Forgot Password //
+//---------------------//
+
+exports.Forgot_Password = async (req, res) => {
+    try {
+        const { Email, NICPassportNumber, NewPassword, OTP } = req.body;
+
+        // --- Check if Doctor exists --- //
+        const existingDoctor = await doctor.findOne({ Email });
+
+        if (!existingDoctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        // --- Check if NICPassportNumber matches existingDoctor --- //
+        if (existingDoctor.NICPassportNumber !== NICPassportNumber) {
+            return res.status(400).json({ message: "Invalid NIC/Passport Number" });
+        }
+
+        // --- Password Validation --- //
+
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Check OTP === 000000 --- //
+
+        if (OTP === "000000") {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // --- Hash New Password --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        // --- Update Password --- //
+        existingDoctor.Password = hashedPassword;
+        await existingDoctor.save();
+
+        res.status(200).json({ message: "Doctor Password Reset Successfully", existingDoctor });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }

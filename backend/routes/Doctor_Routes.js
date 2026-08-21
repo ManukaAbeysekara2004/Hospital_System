@@ -40,4 +40,7 @@ router.patch('/update-phone-number/:doctorId', DoctorController.Update_Phone_Num
 // 12. Update Password //
 router.patch('/update-password/:doctorId', DoctorController.Update_Password);
 
+// 13. Forgot Password //
+router.patch('/forgot-password', DoctorController.Forgot_Password);
+
 module.exports = router;

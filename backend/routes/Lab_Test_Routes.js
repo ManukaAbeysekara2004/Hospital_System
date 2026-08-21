@@ -32,4 +32,10 @@ router.get('/get-blood-test-details-by-patient-id/:PatientID', Lab_Test_Controll
 // 10. Get Urine Test Details by Patient ID //
 router.get('/get-urine-test-details-by-patient-id/:PatientID', Lab_Test_Controller.get_Urine_Test_Details_By_PatientID);
 
+// 11. Delete Blood Test //
+router.delete('/delete-blood-test/:BloodTestID', Lab_Test_Controller.delete_Blood_Test);
+
+// 12. Delete Urine Test //
+router.delete('/delete-urine-test/:UrineTestID', Lab_Test_Controller.delete_Urine_Test);
+
 module.exports = router;

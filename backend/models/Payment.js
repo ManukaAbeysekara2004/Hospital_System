@@ -29,6 +29,12 @@ const paymentSchema = new mongoose.Schema({
                 required: true,
                 default: 0,
                 min: 0
+            },
+
+            Done: {
+                type: Boolean,
+                default: false,
+                required: false
             }
         }
     ],
@@ -53,6 +59,12 @@ const paymentSchema = new mongoose.Schema({
                 default: 1350,
                 required: true,
                 min: 0
+            },
+
+            Done: {
+                type: Boolean,
+                default: false,
+                required: false
             }
         }
     ],
@@ -77,6 +89,12 @@ const paymentSchema = new mongoose.Schema({
                 default: 1450,
                 required: true,
                 min: 0
+            },
+
+            Done: {
+                type: Boolean,
+                default: false,
+                required: false
             }
         }
     ],
@@ -101,6 +119,12 @@ const paymentSchema = new mongoose.Schema({
                 default: 0,
                 required: true,
                 min: 0
+            },
+
+            Done: {
+                type: Boolean,
+                default: false,
+                required: false
             }
         }
     ],
@@ -117,7 +141,7 @@ const paymentSchema = new mongoose.Schema({
     Complete_Full_Payment: {
         type: Boolean,
         default: false,
-        required: true
+        required: false
     }
 
 }, { timestamps: true });

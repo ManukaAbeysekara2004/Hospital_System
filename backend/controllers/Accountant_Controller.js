@@ -250,7 +250,8 @@ exports.Get_Accountant_Details = async (req, res) => {
 
 exports.Delete_Accountant = async (req, res) => {
     try {
-        const { accountantId, Password } = req.params;
+        const { accountantId } = req.params;
+        const { Password } = req.body;
 
         // --- Check if Accountant exists --- //
         const existingAccountant = await accountant.findById(accountantId);
@@ -346,11 +347,56 @@ exports.Update_Password = async (req, res) => {
         // --- Hash Password --- //
 
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(Password, salt);
+        const hashedPassword = await bcrypt.hash(NewPassword, salt);
 
         existingAccountant.Password = hashedPassword;
         await existingAccountant.save();
 
+        res.status(200).json({ message: "Password updated successfully", existingAccountant });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+
+// 09. Forgot Password //
+//---------------------//
+
+exports.Forgot_Password = async (req, res) => {
+    try {
+        const { Email, NICNumber, NewPassword, OTP } = req.body;
+
+        // --- Check if Accountant exists By email --- //
+        const existingAccountant = await accountant.findOne({ Email });
+
+        if (!existingAccountant) {
+            return res.status(404).json({ message: "Accountant not found" });
+        }
+
+        // --- Check if NICNumber matches existingAccountant --- //
+        if (existingAccountant.NICNumber !== NICNumber) {
+            return res.status(400).json({ message: "Invalid NIC Number" });
+        }
+
+        // --- Password Validation --- //
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Check OTP === 000000 --- //
+        if (OTP === "000000") {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // --- Hash Password And Save --- //
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(NewPassword, salt);
+
+        existingAccountant.Password = hashedPassword;
+        await existingAccountant.save();
+        
         res.status(200).json({ message: "Password updated successfully", existingAccountant });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });

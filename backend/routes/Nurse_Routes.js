@@ -37,4 +37,7 @@ router.patch('/update-phone-number/:nurseId', NurseController.Update_Phone_Numbe
 // 11. Update Password //
 router.patch('/update-password/:nurseId', NurseController.Update_Password);
 
+// 12. Forgot Password //
+router.patch('/forgot-password', NurseController.Forgot_Password);
+
 module.exports = router;

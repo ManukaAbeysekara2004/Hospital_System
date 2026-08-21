@@ -265,7 +265,8 @@ exports.Get_Laboratory_Staff_Details = async (req, res) => {
 
 exports.Delete_Laboratory_Staff = async (req, res) => {
     try {
-        const { laboratoryStaffId, Password } = req.params;
+        const { laboratoryStaffId } = req.params;
+        const { Password } = req.body;
 
         // --- Check if Laboratory Staff exists --- //
         const existingLaboratoryStaff = await laboratory_staff.findById(laboratoryStaffId);
@@ -358,3 +359,47 @@ exports.Update_Password = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+
+// 09. Forgot Password //
+//---------------------//
+
+exports.Forgot_Password = async (req, res) => {
+    try {
+        const { Email, NICNumber, NewPassword, OTP } = req.body;
+
+        // --- Check if Laboratory Staff exists By email --- //
+        const existingLaboratoryStaff = await laboratory_staff.findOne({ Email });
+
+        if (!existingLaboratoryStaff) {
+            return res.status(404).json({ message: "Laboratory Staff not found" });
+        }
+
+        // --- Check if NICNumber matches existingLaboratoryStaff --- //
+        if (existingLaboratoryStaff.NICNumber !== NICNumber) {
+            return res.status(400).json({ message: "Invalid NIC Number" });
+        }
+
+        // --- Password Validation --- //
+        if (NewPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        // --- Check OTP === 000000 --- //
+        if (OTP === "000000") {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // --- Hash Password And Save --- //
+        const hashedPassword = await bcrypt.hash(NewPassword, 10);
+
+        existingLaboratoryStaff.Password = hashedPassword;
+        await existingLaboratoryStaff.save();
+
+        res.status(200).json({ message: "Laboratory Staff Password Updated", existingLaboratoryStaff });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};      

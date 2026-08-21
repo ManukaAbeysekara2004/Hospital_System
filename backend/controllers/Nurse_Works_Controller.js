@@ -24,8 +24,6 @@ exports.Create_Nurse_Works = async (req, res) => {
 
         const { NurseID, PatientID } = req.params;
 
-        const { Works } = req.body;
-
         // --- Check if Nurse exists --- //
         const existingNurse = await nurse.findById(NurseID);
 
@@ -58,8 +56,7 @@ exports.Create_Nurse_Works = async (req, res) => {
         // --- Save Nurse Works --- //
         const newNurseWorks = new nurseWorks({
             NurseID,
-            PatientID,
-            Works
+            PatientID
         });
 
         await newNurseWorks.save();
@@ -85,7 +82,6 @@ exports.Update_Nurse_Work = async (req, res) => {
     try {
 
         const { NurseWorkID, WorkID } = req.params;
-        const { Done } = req.body;
 
         // --- Check Nurse Work exists --- //
         const existingNurseWork = await nurseWorks.findById(NurseWorkID);
@@ -105,15 +101,8 @@ exports.Update_Nurse_Work = async (req, res) => {
             });
         }
 
-        // --- Validate Done value --- //
-        if (typeof Done !== "boolean") {
-            return res.status(400).json({
-                message: "Done must be true or false"
-            });
-        }
-
         // --- Update only Done --- //
-        existingWork.Done = Done;
+        existingWork.Done = true;
 
         await existingNurseWork.save();
 
@@ -138,7 +127,6 @@ exports.Update_AllDone = async (req, res) => {
     try {
 
         const { NurseWorkID } = req.params;
-        const { AllDone } = req.body;
 
         // --- Check Nurse Work exists --- //
         const existingNurseWork = await nurseWorks.findById(NurseWorkID);
@@ -149,17 +137,21 @@ exports.Update_AllDone = async (req, res) => {
             });
         }
 
-        // --- Validate AllDone value --- //
-        if (typeof AllDone !== "boolean") {
-            return res.status(400).json({
-                message: "AllDone must be true or false"
+        // --- Get The Nurse --- //
+        const existingNurse = await nurse.findById(existingNurseWork.NurseID);
+
+        if(!existingNurse){
+            return res.status(404).json({
+                message: "Nurse not found"
             });
         }
 
         // --- Update AllDone --- //
-        existingNurseWork.AllDone = AllDone;
+        existingNurseWork.AllDone = true;
+        existingNurse.InWork = false;
 
         await existingNurseWork.save();
+        await existingNurse.save();
 
         res.status(200).json({
             message: "AllDone status updated successfully",
@@ -250,7 +242,7 @@ exports.Delete_Work = async (req, res) => {
         }
 
         // --- Delete Work --- //
-        existingWork.remove();
+        existingNurseWork.Works.pull(WorkID);
 
         await existingNurseWork.save();
 
@@ -442,6 +434,46 @@ exports.Get_Nurse_Work_By_Patient_ID = async (req, res) => {
             nurse_work,
             existingPatient,
             existingNurse
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Server Error",
+            error: error.message
+        });
+    }
+};
+
+
+// 11. Delete Nurse Work //
+//------------------------//
+
+exports.Delete_Nurse_Work = async (req, res) => {
+    try {
+
+        const { NurseWorkID } = req.params;
+
+        // --- Check Nurse Work exists --- //
+        const existingNurseWork = await nurseWorks.findById(NurseWorkID);
+
+        if (!existingNurseWork) {
+            return res.status(404).json({
+                message: "Nurse work not found"
+            });
+        }
+
+        // --- Update Nurse InWork to False --- //
+        const existingNurse = await nurse.findById(existingNurseWork.NurseID);
+        if (existingNurse) {
+            existingNurse.InWork = false;
+            await existingNurse.save();
+        }
+
+        // --- Delete Nurse Work --- //
+        await nurseWorks.findByIdAndDelete(NurseWorkID);
+
+        res.status(200).json({
+            message: "Nurse work deleted successfully"
         });
 
     } catch (error) {

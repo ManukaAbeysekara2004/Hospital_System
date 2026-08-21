@@ -23,10 +23,10 @@ const bcrypt = require('bcryptjs');
 
 exports.add_Medicine = async (req, res) => {
     try {
-        const { MedicineName, Quantity, UnitPrice } = req.body;
+        const { TabletName, Quantity, UnitPrice } = req.body;
 
         const addMedicine = new medicine({
-            MedicineName,
+            TabletName,
             Quantity,
             UnitPrice
         });
@@ -48,7 +48,7 @@ exports.update_Medicine_Quantity = async (req, res) => {
         const { MedicineID } = req.params;
         const { Quantity } = req.body;
 
-        const updateMedicine = await medicine.findOne({ MedicineID });
+        const updateMedicine = await medicine.findById(MedicineID);
 
         if (!updateMedicine) {
             return res.status(404).json({ message: "Medicine not found" });
@@ -73,7 +73,7 @@ exports.update_Medicine_UnitPrice = async (req, res) => {
         const { MedicineID } = req.params;
         const { UnitPrice } = req.body;
 
-        const updateMedicine = await medicine.findOne({ MedicineID });
+        const updateMedicine = await medicine.findById(MedicineID);
 
         if (!updateMedicine) {
             return res.status(404).json({ message: "Medicine not found" });
@@ -97,7 +97,7 @@ exports.get_UnitPrice = async (req, res) => {
     try {
         const { MedicineID } = req.params;
 
-        const getUnitPrice = await medicine.findOne({ MedicineID });
+        const getUnitPrice = await medicine.findById(MedicineID);
 
         if (!getUnitPrice) {
             return res.status(404).json({ message: "Medicine not found" });
@@ -117,7 +117,7 @@ exports.get_Quantity = async (req, res) => {
     try {
         const { MedicineID } = req.params;
 
-        const getQuantity = await medicine.findOne({ MedicineID });
+        const getQuantity = await medicine.findById(MedicineID);
 
         if (!getQuantity) {
             return res.status(404).json({ message: "Medicine not found" });
@@ -137,7 +137,7 @@ exports.delete_Medicine = async (req, res) => {
     try {
         const { MedicineID } = req.params;
 
-        const deleteMedicine = await medicine.findOne({ MedicineID });
+        const deleteMedicine = await medicine.findById(MedicineID);
 
         if (!deleteMedicine) {
             return res.status(404).json({ message: "Medicine not found" });

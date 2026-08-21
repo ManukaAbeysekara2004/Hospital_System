@@ -31,6 +31,7 @@ router.post('/update-medicine-paidstatus-and-full-payment/:MedicinID/:PatientID'
 
 // 10. Update CompleteStatus on Payment //
 router.post('/update-complete-status/:PatientID', PaymentController.update_CompleteStatus);
+router.post('/update-complete-status-by-id/:PaymentID', PaymentController.update_CompleteStatus);
 
 // 11. Get Complete_Full_Payment True All Payments //
 router.get('/get-complete-full-payments', PaymentController.get_Complete_Full_Payments);
@@ -40,5 +41,17 @@ router.get('/get-not-complete-full-payments', PaymentController.get_Not_Complete
 
 // 13. Get Payment By Patient ID //
 router.get('/get-payment-details-by-patientid/:PatientID', PaymentController.get_Payment_Details_By_patientID);
+
+// 14. Delete Payment //
+router.delete('/delete-payment/:PaymentID', PaymentController.delete_Payment);
+
+// 15. Delete Blood_test_Fee From Payment Model //
+router.delete('/delete-blood-test-fee/:PaymentID/:BloodTestID', PaymentController.delete_Blood_test_Fee);
+
+// 16. Delete Urine_test_Fee From Payment Model //
+router.delete('/delete-urine-test-fee/:PaymentID/:UrineTestID', PaymentController.delete_Urine_test_Fee);
+
+// 17. Delete Medicine From Payment Model //
+router.delete('/delete-medicine-fee/:PaymentID/:MedicineID', PaymentController.delete_Medicine_Fee);
 
 module.exports = router;

@@ -28,4 +28,7 @@ router.patch('/update-phone-number/:laboratoryStaffId', LaboratoryStaffControlle
 // 08. Update Password //
 router.patch('/update-password/:laboratoryStaffId', LaboratoryStaffController.Update_Password);
 
+// 09. Forgot Password //
+router.patch('/forgot-password', LaboratoryStaffController.Forgot_Password);
+
 module.exports = router;

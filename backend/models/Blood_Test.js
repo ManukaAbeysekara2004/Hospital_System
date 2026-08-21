@@ -23,42 +23,42 @@ const bloodTestSchema = new mongoose.Schema({
     CompleteStatus: {
         type: Boolean,
         default: false,
-        required: true
+        required: false
     },
 
     Hemoglobin: {
         type: Number,
-        required: true,
+        required: false,
         default: 0.0
     },
 
     WBC: {
         type: Number,
-        required: true,
+        required: false,
         default: 0.0
     },
 
     RBC: {
         type: Number,
-        required: true,
+        required: false,
         default: 0.0
     },
 
     Platelets: {
         type: Number,
-        required: true,
+        required: false,
         default: 0.0
     },
 
     BloodSugar: {
         type: Number,
-        required: true,
+        required: false,
         default: 0.0
     },
 
     BloodGroup: {
         type: String,
-        required: true,
+        required: false,
         default: ""
     },
 
@@ -71,13 +71,13 @@ const bloodTestSchema = new mongoose.Schema({
     Fee: {
         type: Number,
         default: 1350,
-        required: true
+        required: false
     },
 
     PaidStatus: {
         type: Boolean,
         default: false,
-        required: true
+        required: false
     }
 
 }, { timestamps: true });

@@ -29,8 +29,29 @@ import {
   Microscope,
   UserCheck,
   Eye,
-  XCircle
+  XCircle,
+  RefreshCw,
+  EyeOff,
+  Key,
+  Mail,
+  Boxes
 } from 'lucide-react';
+
+const TAB_TITLES = {
+  dashboard: 'Dashboard',
+  patients: 'Patients',
+  doctors: 'Doctors',
+  nurses: 'Nurse',
+  admins: 'Admin',
+  receptionists: 'Receptionist',
+  pharmacists: 'Pharmacist',
+  accountants: 'Accountant',
+  labstaff: 'Laboratory Staff',
+  appointments: 'Appointments',
+  medicine_stock: 'Medicine Stock',
+  billing: 'Billing & Payments',
+  settings: 'Settings'
+};
 
 export default function AdminDashboard({ user, onLogout, theme, onToggleTheme }) {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -137,6 +158,143 @@ export default function AdminDashboard({ user, onLogout, theme, onToggleTheme })
   const [isDeletingLabStaff, setIsDeletingLabStaff] = useState(false);
   const [showLabStaffDeleteModal, setShowLabStaffDeleteModal] = useState(false);
   const [labStaffToDelete, setLabStaffToDelete] = useState(null);
+
+  // Appointments Management State
+  const [pendingAppointments, setPendingAppointments] = useState([]);
+  const [inprogressAppointments, setInprogressAppointments] = useState([]);
+  const [completedAppointments, setCompletedAppointments] = useState([]);
+  const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
+  const [apptApiError, setApptApiError] = useState('');
+  const [apptSearchQuery, setApptSearchQuery] = useState('');
+
+  // Delete Appointment Modal State
+  const [showDeleteApptModal, setShowDeleteApptModal] = useState(false);
+  const [apptToDelete, setApptToDelete] = useState(null);
+  const [isDeletingAppt, setIsDeletingAppt] = useState(false);
+
+  // Settings Tab State
+  const [myAdminDetails, setMyAdminDetails] = useState(null);
+  const [isLoadingMyAdminDetails, setIsLoadingMyAdminDetails] = useState(false);
+  const [myAdminDetailsError, setMyAdminDetailsError] = useState('');
+
+  // 01. Update Phone Number Modal State
+  const [showMyAdminPhoneModal, setShowMyAdminPhoneModal] = useState(false);
+  const [newMyAdminPhone, setNewMyAdminPhone] = useState('');
+  const [myAdminPhoneError, setMyAdminPhoneError] = useState('');
+  const [myAdminPhoneSuccess, setMyAdminPhoneSuccess] = useState('');
+  const [isUpdatingMyAdminPhone, setIsUpdatingMyAdminPhone] = useState(false);
+
+  // 02. Update Password Modal State
+  const [showMyAdminPasswordModal, setShowMyAdminPasswordModal] = useState(false);
+  const [myAdminOldPassword, setMyAdminOldPassword] = useState('');
+  const [myAdminNewPassword, setMyAdminNewPassword] = useState('');
+  const [myAdminConfirmPassword, setMyAdminConfirmPassword] = useState('');
+  const [showMyAdminOldPassword, setShowMyAdminOldPassword] = useState(false);
+  const [showMyAdminNewPassword, setShowMyAdminNewPassword] = useState(false);
+  const [showMyAdminConfirmPassword, setShowMyAdminConfirmPassword] = useState(false);
+  const [myAdminPasswordError, setMyAdminPasswordError] = useState('');
+  const [myAdminPasswordSuccess, setMyAdminPasswordSuccess] = useState('');
+  const [isUpdatingMyAdminPassword, setIsUpdatingMyAdminPassword] = useState(false);
+
+  // 03. Delete Admin Account Modal State
+  const [showDeleteAdminAccountModal, setShowDeleteAdminAccountModal] = useState(false);
+  const [deleteAdminAccountPassword, setDeleteAdminAccountPassword] = useState('');
+  const [showDeleteAdminPassword, setShowDeleteAdminPassword] = useState(false);
+  const [deleteAdminAccountError, setDeleteAdminAccountError] = useState('');
+  const [isDeletingAdminAccount, setIsDeletingAdminAccount] = useState(false);
+
+  // Medicine Stock State
+  const [medicines, setMedicines] = useState([]);
+  const [isLoadingMedicines, setIsLoadingMedicines] = useState(false);
+
+  // Billing & Payments (Completed Bills) State
+  const [completedPaymentsList, setCompletedPaymentsList] = useState([]);
+  const [isLoadingCompleted, setIsLoadingCompleted] = useState(false);
+  const [completedError, setCompletedError] = useState('');
+  const [completedSearchQuery, setCompletedSearchQuery] = useState('');
+
+  const fetchMedicines = async () => {
+    setIsLoadingMedicines(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/medicine/get-all-medicine-details');
+      if (response.ok) {
+        const data = await response.json();
+        setMedicines(data.getAllMedicine || data.allMedicine || data.medicines || []);
+      }
+    } catch (e) {
+      console.error('Error fetching medicines:', e);
+    } finally {
+      setIsLoadingMedicines(false);
+    }
+  };
+
+  const fetchCompletedPayments = async () => {
+    setIsLoadingCompleted(true);
+    setCompletedError('');
+    try {
+      const response = await fetch('http://localhost:5000/api/payment/get-complete-full-payments');
+      const data = await response.json();
+      if (response.ok) {
+        let list = [];
+        if (Array.isArray(data.data)) {
+          list = data.data;
+        } else if (data.data && Array.isArray(data.data.isPaymentExist)) {
+          list = data.data.isPaymentExist;
+        }
+        setCompletedPaymentsList(list);
+      } else {
+        setCompletedError(data.message || data.error || 'Failed to load completed payments.');
+      }
+    } catch (err) {
+      console.error('Error fetching completed payments:', err);
+      setCompletedError('Could not connect to backend server.');
+    } finally {
+      setIsLoadingCompleted(false);
+    }
+  };
+
+  const getPatientRegIDForBill = (pay) => {
+    if (pay?.PatientDetails?.PatientRegID) return pay.PatientDetails.PatientRegID;
+    if (pay?.PatientRegID && typeof pay.PatientRegID === 'string' && pay.PatientRegID.startsWith('PAT-')) {
+      return pay.PatientRegID;
+    }
+    const found = patients.find(p => String(p._id) === String(pay?.PatientID) || p.PatientRegID === pay?.PatientID);
+    if (found?.PatientRegID) return found.PatientRegID;
+    return 'N/A';
+  };
+
+  const getPatientNameForBill = (pay) => {
+    if (pay?.PatientDetails?.FullName) return pay.PatientDetails.FullName;
+    if (pay?.FullName) return pay.FullName;
+    const found = patients.find(p => String(p._id) === String(pay?.PatientID) || p.PatientRegID === pay?.PatientID);
+    if (found?.FullName) return found.FullName;
+    return 'Patient Record';
+  };
+
+  const getPaymentItemsForBill = (pay) => {
+    const items = [];
+    if (Array.isArray(pay.Appoinment_Fee)) {
+      pay.Appoinment_Fee.forEach(item => {
+        items.push({ name: item.BillName || 'Appointment Fee', amount: item.Appoinment_Fee || 0, done: item.Done === true });
+      });
+    }
+    if (Array.isArray(pay.Blood_test_Fee)) {
+      pay.Blood_test_Fee.forEach(item => {
+        items.push({ name: item.BillName || 'Blood Test Fee', amount: item.BloodTestFee || 0, done: item.Done === true });
+      });
+    }
+    if (Array.isArray(pay.Urine_test_Fee)) {
+      pay.Urine_test_Fee.forEach(item => {
+        items.push({ name: item.BillName || 'Urine Test Fee', amount: item.UrineTestFee || 0, done: item.Done === true });
+      });
+    }
+    if (Array.isArray(pay.Medicine_Fee)) {
+      pay.Medicine_Fee.forEach(item => {
+        items.push({ name: item.BillName || 'Medicine Fee', amount: item.MedicinePrice || 0, done: item.Done === true });
+      });
+    }
+    return items;
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -350,8 +508,300 @@ export default function AdminDashboard({ user, onLogout, theme, onToggleTheme })
     }
   };
 
+  const fetchAppointmentsData = async () => {
+    setIsLoadingAppointments(true);
+    setApptApiError('');
+
+    try {
+      const [pendingRes, inprogRes, compRes] = await Promise.all([
+        fetch('http://localhost:5000/api/appointment/get-all-pending-appointments'),
+        fetch('http://localhost:5000/api/appointment/get-all-inprogress-appointments'),
+        fetch('http://localhost:5000/api/appointment/get-all-completed-appointments')
+      ]);
+
+      const pendingData = await pendingRes.json();
+      const inprogData = await inprogRes.json();
+      const compData = await compRes.json();
+
+      if (pendingRes.ok) {
+        setPendingAppointments(pendingData.allPendingAppointments || pendingData.allAppointments || []);
+      } else {
+        setPendingAppointments([]);
+      }
+
+      if (inprogRes.ok) {
+        setInprogressAppointments(inprogData.allInprogressAppointments || inprogData.allAppointments || []);
+      } else {
+        setInprogressAppointments([]);
+      }
+
+      if (compRes.ok) {
+        setCompletedAppointments(compData.allCompletedAppointments || compData.allAppointments || []);
+      } else {
+        setCompletedAppointments([]);
+      }
+    } catch (err) {
+      console.error('Error fetching appointments:', err);
+      setApptApiError('Could not connect to backend server to load appointments.');
+    } finally {
+      setIsLoadingAppointments(false);
+    }
+  };
+
+  const getPatientDetails = (patientId) => {
+    if (!patientId) return null;
+    if (typeof patientId === 'object' && patientId.PatientRegID) return patientId;
+    return patients.find(p => String(p._id) === String(patientId) || p.PatientID === patientId);
+  };
+
+  const getDoctorDetails = (doctorId) => {
+    if (!doctorId) return null;
+    if (typeof doctorId === 'object' && doctorId.FullName) return doctorId;
+    return doctors.find(d => String(d._id) === String(doctorId) || d.DoctorID === doctorId);
+  };
+
+  const filterAppointments = (list) => {
+    if (!apptSearchQuery.trim()) return list;
+    const query = apptSearchQuery.toLowerCase();
+    return list.filter(appt => {
+      const p = getPatientDetails(appt.PatientID);
+      const d = getDoctorDetails(appt.DoctorID);
+      const pRegID = p?.PatientRegID ? p.PatientRegID.toLowerCase() : '';
+      const pName = p?.FullName ? p.FullName.toLowerCase() : '';
+      const dName = d?.FullName ? d.FullName.toLowerCase() : '';
+      return pRegID.includes(query) || pName.includes(query) || dName.includes(query);
+    });
+  };
+
+  const handleOpenDeleteApptModal = (appt) => {
+    setApptToDelete(appt);
+    setShowDeleteApptModal(true);
+  };
+
+  const handleConfirmDeleteAppt = async () => {
+    if (!apptToDelete) return;
+    setIsDeletingAppt(true);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/appointment/delete-appointment/${apptToDelete._id}`, {
+        method: 'DELETE'
+      });
+      const resData = await response.json();
+
+      if (response.ok) {
+        setIsDeletingAppt(false);
+        setShowDeleteApptModal(false);
+        setApptToDelete(null);
+        fetchAppointmentsData();
+      } else {
+        setIsDeletingAppt(false);
+        alert(resData.message || 'Failed to delete appointment.');
+      }
+    } catch (err) {
+      console.error('Error deleting appointment:', err);
+      setIsDeletingAppt(false);
+      alert('Could not connect to backend server to delete appointment.');
+    }
+  };
+
+  // 01. Fetch Admin Details using Get_Admin_Details endpoint
+  const fetchMyAdminDetails = async () => {
+    const adminId = user?._id || user?.id || user?.adminDetails?._id;
+    if (!adminId) return;
+
+    setIsLoadingMyAdminDetails(true);
+    setMyAdminDetailsError('');
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/details/${adminId}`);
+      const data = await response.json();
+      if (response.ok && data.adminDetails) {
+        setMyAdminDetails(data.adminDetails);
+        setNewMyAdminPhone(data.adminDetails.PhoneNumber || '');
+      } else {
+        setMyAdminDetailsError(data.message || 'Failed to load admin details.');
+      }
+    } catch (err) {
+      console.error('Error fetching admin details:', err);
+      setMyAdminDetailsError('Could not connect to backend server to load profile.');
+    } finally {
+      setIsLoadingMyAdminDetails(false);
+    }
+  };
+
+  // 02. Update Phone Number Submit Handler (calls Update_Phone_Number)
+  const handleUpdateMyAdminPhoneSubmit = async (e) => {
+    e.preventDefault();
+    setMyAdminPhoneError('');
+    setMyAdminPhoneSuccess('');
+
+    const adminId = user?._id || user?.id || user?.adminDetails?._id;
+    if (!adminId) {
+      setMyAdminPhoneError('User session ID not found.');
+      return;
+    }
+
+    if (!/^\d{10}$/.test(newMyAdminPhone.trim())) {
+      setMyAdminPhoneError('Phone Number must contain exactly 10 digits.');
+      return;
+    }
+
+    setIsUpdatingMyAdminPhone(true);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/update-phone-number/${adminId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ PhoneNumber: newMyAdminPhone.trim() })
+      });
+
+      const resData = await response.json();
+
+      if (response.ok) {
+        setIsUpdatingMyAdminPhone(false);
+        setMyAdminPhoneSuccess('Phone Number updated successfully!');
+        setTimeout(() => {
+          setShowMyAdminPhoneModal(false);
+          setMyAdminPhoneSuccess('');
+        }, 1200);
+        fetchMyAdminDetails();
+      } else {
+        setIsUpdatingMyAdminPhone(false);
+        setMyAdminPhoneError(resData.message || 'Failed to update phone number.');
+      }
+    } catch (err) {
+      console.error('Error updating phone number:', err);
+      setIsUpdatingMyAdminPhone(false);
+      setMyAdminPhoneError('Could not connect to backend server.');
+    }
+  };
+
+  // 03. Update Password Submit Handler (calls Update_Password)
+  const handleUpdateMyAdminPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setMyAdminPasswordError('');
+    setMyAdminPasswordSuccess('');
+
+    const adminId = user?._id || user?.id || user?.adminDetails?._id;
+    if (!adminId) {
+      setMyAdminPasswordError('User session ID not found.');
+      return;
+    }
+
+    if (!myAdminOldPassword) {
+      setMyAdminPasswordError('Please enter your current password.');
+      return;
+    }
+
+    if (!myAdminNewPassword || myAdminNewPassword.length < 6) {
+      setMyAdminPasswordError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (myAdminNewPassword !== myAdminConfirmPassword) {
+      setMyAdminPasswordError('New passwords do not match.');
+      return;
+    }
+
+    setIsUpdatingMyAdminPassword(true);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/update-password/${adminId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          OldPassword: myAdminOldPassword,
+          NewPassword: myAdminNewPassword
+        })
+      });
+
+      const resData = await response.json();
+
+      if (response.ok) {
+        setIsUpdatingMyAdminPassword(false);
+        setMyAdminPasswordSuccess('Password updated successfully!');
+        setMyAdminOldPassword('');
+        setMyAdminNewPassword('');
+        setMyAdminConfirmPassword('');
+        setTimeout(() => {
+          setShowMyAdminPasswordModal(false);
+          setMyAdminPasswordSuccess('');
+        }, 1200);
+      } else {
+        setIsUpdatingMyAdminPassword(false);
+        setMyAdminPasswordError(resData.message || 'Failed to update password.');
+      }
+    } catch (err) {
+      console.error('Error updating password:', err);
+      setIsUpdatingMyAdminPassword(false);
+      setMyAdminPasswordError('Could not connect to backend server.');
+    }
+  };
+
+  // 04. Delete Admin Submit Handler (calls Delete_Admin)
+  const handleDeleteMyAdminAccountSubmit = async (e) => {
+    e.preventDefault();
+    setDeleteAdminAccountError('');
+
+    const adminId = user?._id || user?.id || myAdminDetails?._id || user?.adminDetails?._id;
+    if (!adminId) {
+      setDeleteAdminAccountError('User session ID not found.');
+      return;
+    }
+
+    const pass = (deleteAdminAccountPassword || '').trim();
+    if (!pass) {
+      setDeleteAdminAccountError('Please enter your password to confirm account deletion.');
+      return;
+    }
+
+    setIsDeletingAdminAccount(true);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/delete/${adminId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          adminId: adminId,
+          Password: pass
+        })
+      });
+
+      const resData = await response.json();
+
+      if (response.ok) {
+        setIsDeletingAdminAccount(false);
+        setShowDeleteAdminAccountModal(false);
+        onLogout();
+      } else {
+        setIsDeletingAdminAccount(false);
+        setDeleteAdminAccountError(resData.message || 'Failed to delete account. Incorrect password.');
+      }
+    } catch (err) {
+      console.error('Error deleting admin account:', err);
+      setIsDeletingAdminAccount(false);
+      setDeleteAdminAccountError('Could not connect to backend server.');
+    }
+  };
+
   useEffect(() => {
-    if (activeTab === 'patients') {
+    if (activeTab === 'dashboard') {
+      fetchPatients();
+      fetchDoctors();
+      fetchNurses();
+      fetchAdmins();
+      fetchReceptionists();
+      fetchPharmacists();
+      fetchLabStaff();
+      fetchAppointmentsData();
+      fetchCompletedPayments();
+    } else if (activeTab === 'patients') {
       fetchPatients();
     } else if (activeTab === 'doctors') {
       setDoctorFilter('approved');
@@ -374,6 +824,17 @@ export default function AdminDashboard({ user, onLogout, theme, onToggleTheme })
     } else if (activeTab === 'labstaff') {
       setLabStaffFilter('approved');
       fetchLabStaff();
+    } else if (activeTab === 'appointments') {
+      fetchPatients();
+      fetchDoctors();
+      fetchAppointmentsData();
+    } else if (activeTab === 'medicine_stock') {
+      fetchMedicines();
+    } else if (activeTab === 'billing') {
+      fetchPatients();
+      fetchCompletedPayments();
+    } else if (activeTab === 'settings') {
+      fetchMyAdminDetails();
     }
   }, [activeTab]);
 
@@ -1113,6 +1574,10 @@ export default function AdminDashboard({ user, onLogout, theme, onToggleTheme })
               <Calendar size={18} />
               Appointments
             </button>
+            <button className={`dash-nav-item ${activeTab === 'medicine_stock' ? 'active' : ''}`} onClick={() => setActiveTab('medicine_stock')}>
+              <Boxes size={18} />
+              Medicine Stock
+            </button>
             <button className={`dash-nav-item ${activeTab === 'billing' ? 'active' : ''}`} onClick={() => setActiveTab('billing')}>
               <CreditCard size={18} />
               Billing & Payments
@@ -1211,31 +1676,405 @@ export default function AdminDashboard({ user, onLogout, theme, onToggleTheme })
               ADMINISTRATOR DASHBOARD | Session Active
             </span>
             <h2>Welcome back, {user?.FullName || 'Administrator'}</h2>
-            <p>
-              Apex Health International Hospital live system administration & access security control. Manage staff accounts, system logs, and hospital metrics.
-            </p>
+            {activeTab === 'dashboard' && (
+              <p>
+                Apex Health International Hospital live system administration & access security control. Manage staff accounts, system logs, and hospital metrics.
+              </p>
+            )}
           </div>
 
-          {/* Right Action Buttons */}
-          <div className="dash-hero-action-buttons">
-            <button className="dash-action-btn-primary" onClick={() => setActiveTab('patients')}>
-              <Users size={16} />
-              View Patients
-            </button>
-            <button className="dash-action-btn-secondary">
-              <ShieldCheck size={16} />
-              Approvals
-            </button>
-            <button className="dash-action-btn-secondary">
-              <Database size={16} />
-              Logs
-            </button>
-            <button className="dash-action-btn-secondary">
-              <FileText size={16} />
-              Reports
-            </button>
+          {/* Right Active Page Title Badge */}
+          <div className="dash-hero-right-badge">
+            {TAB_TITLES[activeTab] || 'Dashboard'}
           </div>
         </div>
+
+        {/* Dashboard Overview Section */}
+        {activeTab === 'dashboard' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
+            {/* Top Revenue Summary Banner */}
+            {(() => {
+              const totalRevenue = completedPaymentsList.reduce((acc, pay) => acc + (pay.Full_Payment || 0), 0);
+              return (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(13, 148, 136, 0.12) 100%)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  borderRadius: '22px',
+                  padding: '24px 30px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  boxShadow: 'var(--shadow-card)'
+                }}>
+                  <div>
+                    <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={16} /> Total Completed Revenue
+                    </span>
+                    <h2 style={{ margin: '6px 0 0 0', fontSize: '2.2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                      Rs. {totalRevenue.toLocaleString()}
+                    </h2>
+                  </div>
+                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                        Total Settlement Bills
+                      </span>
+                      <h3 style={{ margin: '4px 0 0 0', fontSize: '1.5rem', fontWeight: '800', color: '#10b981' }}>
+                        {completedPaymentsList.length} Payments Completed
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('billing')}
+                      style={{
+                        background: 'rgba(16, 185, 129, 0.2)',
+                        border: '1px solid rgba(16, 185, 129, 0.4)',
+                        color: '#10b981',
+                        padding: '10px 18px',
+                        borderRadius: '14px',
+                        fontWeight: '800',
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      View Billing <CreditCard size={16} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* 8 System Metric Stat Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '20px'
+            }}>
+              {/* 1. Patients Card */}
+              <div
+                onClick={() => setActiveTab('patients')}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '20px',
+                  padding: '22px',
+                  boxShadow: 'var(--shadow-card)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}
+                className="dash-stat-card"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(45, 212, 191, 0.18)', color: 'var(--teal-400)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Users size={24} />
+                  </div>
+                  <span style={{ background: 'rgba(45, 212, 191, 0.15)', color: 'var(--teal-400)', padding: '4px 12px', borderRadius: '16px', fontSize: '0.78rem', fontWeight: '800' }}>
+                    Patients
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Patients
+                  </span>
+                  <h2 style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                    {isLoadingPatients ? '...' : patients.length}
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Registered System Patients</span>
+                  <span style={{ color: 'var(--teal-400)', fontWeight: '800' }}>View All &rarr;</span>
+                </div>
+              </div>
+
+              {/* 2. Doctors Card */}
+              <div
+                onClick={() => setActiveTab('doctors')}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '20px',
+                  padding: '22px',
+                  boxShadow: 'var(--shadow-card)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}
+                className="dash-stat-card"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(2, 132, 199, 0.18)', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Stethoscope size={24} />
+                  </div>
+                  <span style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', padding: '4px 12px', borderRadius: '16px', fontSize: '0.78rem', fontWeight: '800' }}>
+                    Doctors
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Doctors
+                  </span>
+                  <h2 style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                    {isLoadingDoctors ? '...' : doctors.length}
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Approved: <strong style={{ color: '#10b981' }}>{doctors.filter(d => d.Approve === true).length}</strong> | Pending: <strong style={{ color: '#ef4444' }}>{doctors.filter(d => d.Approve !== true).length}</strong></span>
+                  <span style={{ color: '#0284c7', fontWeight: '800' }}>View &rarr;</span>
+                </div>
+              </div>
+
+              {/* 3. Nurses Card */}
+              <div
+                onClick={() => setActiveTab('nurses')}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '20px',
+                  padding: '22px',
+                  boxShadow: 'var(--shadow-card)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}
+                className="dash-stat-card"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(236, 72, 153, 0.18)', color: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <HeartPulse size={24} />
+                  </div>
+                  <span style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', padding: '4px 12px', borderRadius: '16px', fontSize: '0.78rem', fontWeight: '800' }}>
+                    Nurse
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Nurses
+                  </span>
+                  <h2 style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                    {isLoadingNurses ? '...' : nurses.length}
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Approved: <strong style={{ color: '#10b981' }}>{nurses.filter(n => n.Approve === true).length}</strong> | Pending: <strong style={{ color: '#ef4444' }}>{nurses.filter(n => n.Approve !== true).length}</strong></span>
+                  <span style={{ color: '#ec4899', fontWeight: '800' }}>View &rarr;</span>
+                </div>
+              </div>
+
+              {/* 4. Admins Card */}
+              <div
+                onClick={() => setActiveTab('admins')}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '20px',
+                  padding: '22px',
+                  boxShadow: 'var(--shadow-card)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}
+                className="dash-stat-card"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(168, 85, 247, 0.18)', color: '#a855f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ShieldCheck size={24} />
+                  </div>
+                  <span style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', padding: '4px 12px', borderRadius: '16px', fontSize: '0.78rem', fontWeight: '800' }}>
+                    Admin
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Admins
+                  </span>
+                  <h2 style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                    {isLoadingAdmins ? '...' : admins.length}
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Approved: <strong style={{ color: '#10b981' }}>{admins.filter(a => a.Approve === true).length}</strong> | Pending: <strong style={{ color: '#ef4444' }}>{admins.filter(a => a.Approve !== true).length}</strong></span>
+                  <span style={{ color: '#a855f7', fontWeight: '800' }}>View &rarr;</span>
+                </div>
+              </div>
+
+              {/* 5. Receptionists Card */}
+              <div
+                onClick={() => setActiveTab('receptionists')}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '20px',
+                  padding: '22px',
+                  boxShadow: 'var(--shadow-card)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}
+                className="dash-stat-card"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(245, 158, 11, 0.18)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <UserCheck size={24} />
+                  </div>
+                  <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', padding: '4px 12px', borderRadius: '16px', fontSize: '0.78rem', fontWeight: '800' }}>
+                    Receptionist
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Receptionists
+                  </span>
+                  <h2 style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                    {isLoadingReceptionists ? '...' : receptionists.length}
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Approved: <strong style={{ color: '#10b981' }}>{receptionists.filter(r => r.Approve === true).length}</strong> | Pending: <strong style={{ color: '#ef4444' }}>{receptionists.filter(r => r.Approve !== true).length}</strong></span>
+                  <span style={{ color: '#f59e0b', fontWeight: '800' }}>View &rarr;</span>
+                </div>
+              </div>
+
+              {/* 6. Pharmacists Card */}
+              <div
+                onClick={() => setActiveTab('pharmacists')}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '20px',
+                  padding: '22px',
+                  boxShadow: 'var(--shadow-card)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}
+                className="dash-stat-card"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(16, 185, 129, 0.18)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Pill size={24} />
+                  </div>
+                  <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '4px 12px', borderRadius: '16px', fontSize: '0.78rem', fontWeight: '800' }}>
+                    Pharmacist
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Pharmacists
+                  </span>
+                  <h2 style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                    {isLoadingPharmacists ? '...' : pharmacists.length}
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Approved: <strong style={{ color: '#10b981' }}>{pharmacists.filter(p => p.Approve === true).length}</strong> | Pending: <strong style={{ color: '#ef4444' }}>{pharmacists.filter(p => p.Approve !== true).length}</strong></span>
+                  <span style={{ color: '#10b981', fontWeight: '800' }}>View &rarr;</span>
+                </div>
+              </div>
+
+              {/* 7. Laboratory Staff Card */}
+              <div
+                onClick={() => setActiveTab('labstaff')}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '20px',
+                  padding: '22px',
+                  boxShadow: 'var(--shadow-card)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}
+                className="dash-stat-card"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(99, 102, 241, 0.18)', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Microscope size={24} />
+                  </div>
+                  <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#6366f1', padding: '4px 12px', borderRadius: '16px', fontSize: '0.78rem', fontWeight: '800' }}>
+                    Lab Staff
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Laboratory Staff
+                  </span>
+                  <h2 style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                    {isLoadingLabStaff ? '...' : labStaff.length}
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Approved: <strong style={{ color: '#10b981' }}>{labStaff.filter(l => l.Approve === true).length}</strong> | Pending: <strong style={{ color: '#ef4444' }}>{labStaff.filter(l => l.Approve !== true).length}</strong></span>
+                  <span style={{ color: '#6366f1', fontWeight: '800' }}>View &rarr;</span>
+                </div>
+              </div>
+
+              {/* 8. Appointments Card */}
+              <div
+                onClick={() => setActiveTab('appointments')}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '20px',
+                  padding: '22px',
+                  boxShadow: 'var(--shadow-card)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}
+                className="dash-stat-card"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(14, 165, 233, 0.18)', color: '#0ea5e9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Calendar size={24} />
+                  </div>
+                  <span style={{ background: 'rgba(14, 165, 233, 0.15)', color: '#0ea5e9', padding: '4px 12px', borderRadius: '16px', fontSize: '0.78rem', fontWeight: '800' }}>
+                    Appointments
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Appointments
+                  </span>
+                  <h2 style={{ margin: '4px 0 0 0', fontSize: '2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                    {isLoadingAppointments ? '...' : (pendingAppointments.length + inprogressAppointments.length + completedAppointments.length)}
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Pending: <strong style={{ color: '#f59e0b' }}>{pendingAppointments.length}</strong> | In-Prog: <strong style={{ color: '#0284c7' }}>{inprogressAppointments.length}</strong> | Done: <strong style={{ color: '#10b981' }}>{completedAppointments.length}</strong></span>
+                  <span style={{ color: '#0ea5e9', fontWeight: '800' }}>View &rarr;</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Search Bar & Toolbar Under Welcome Back Box */}
         {activeTab === 'patients' && (
@@ -2743,6 +3582,1055 @@ export default function AdminDashboard({ user, onLogout, theme, onToggleTheme })
             </div>
           </div>
         )}
+
+        {/* Appointments Section */}
+        {activeTab === 'appointments' && (
+          <div className="dash-appointments-section" style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {/* Header Toolbar & Search Bar */}
+            <div className="dash-search-toolbar">
+              {/* Left Spacer so search box is dead center */}
+              <div className="dash-toolbar-left-space" />
+
+              {/* Center Search Bar & Search/Refresh Buttons */}
+              <div className="dash-search-center-group" style={{ flex: 1, maxWidth: '640px' }}>
+                <div className="dash-search-input-wrapper">
+                  <Search size={18} className="dash-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search by Patient Reg ID or Patient Name..."
+                    value={apptSearchQuery}
+                    onChange={(e) => setApptSearchQuery(e.target.value)}
+                    className="dash-search-input"
+                  />
+                </div>
+                {apptSearchQuery && (
+                  <button
+                    onClick={() => setApptSearchQuery('')}
+                    className="back-btn"
+                    style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem' }}
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  onClick={fetchAppointmentsData}
+                  disabled={isLoadingAppointments}
+                  className="dash-search-btn"
+                  style={{ padding: '10px 20px', fontSize: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  title="Refresh Appointments"
+                >
+                  <RefreshCw size={16} className={isLoadingAppointments ? 'spin-icon' : ''} />
+                  {isLoadingAppointments ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
+
+              {/* Right Corner Spacer */}
+              <div className="dash-toolbar-right-group" />
+            </div>
+
+            {apptApiError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '14px 18px', borderRadius: '14px', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <AlertCircle size={20} />
+                {apptApiError}
+              </div>
+            )}
+
+            {/* 3 Parallel Columns (Pending, Inprogress, Completed) */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '24px',
+              alignItems: 'start'
+            }}>
+
+              {/* 01. PENDING APPOINTMENTS COLUMN - COLOR YELLOW */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1.5px solid rgba(245, 158, 11, 0.4)',
+                borderRadius: '22px',
+                padding: '22px',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px'
+              }}>
+                {/* Column Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(245, 158, 11, 0.18)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Clock size={22} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)' }}>Pending Appointments</h4>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>Get_All_Pending_Appointments</span>
+                    </div>
+                  </div>
+                  <span style={{
+                    background: 'rgba(245, 158, 11, 0.22)',
+                    color: '#f59e0b',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.88rem',
+                    fontWeight: '800'
+                  }}>
+                    {filterAppointments(pendingAppointments).length}
+                  </span>
+                </div>
+
+                {/* List of Pending Appointments */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '720px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {isLoadingAppointments ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                      Loading pending appointments...
+                    </div>
+                  ) : filterAppointments(pendingAppointments).length > 0 ? (
+                    filterAppointments(pendingAppointments).map((appt) => {
+                      const patientObj = getPatientDetails(appt.PatientID);
+                      const doctorObj = getDoctorDetails(appt.DoctorID);
+
+                      return (
+                        <div key={appt._id} style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '18px',
+                          padding: '18px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          {/* Top Badge Row */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)', padding: '3px 10px', borderRadius: '8px' }}>
+                              {appt.createdAt ? new Date(appt.createdAt).toLocaleDateString() : 'Today'}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.18)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '3px 10px', borderRadius: '8px' }}>
+                              Pending
+                            </span>
+                          </div>
+
+                          {/* Appointment Details */}
+                          <div style={{ background: 'rgba(245, 158, 11, 0.06)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: '800' }}>
+                                PATIENT REG ID
+                              </span>
+                              <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#f59e0b', fontFamily: 'var(--font-heading)' }}>
+                                {patientObj?.PatientRegID || appt.PatientID}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Doctor Name:</span>
+                              <strong style={{ color: 'var(--text-main)' }}>Dr. {doctorObj?.FullName || appt.DoctorID}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Room Number:</span>
+                              <strong style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.18)', padding: '2px 10px', borderRadius: '6px', fontSize: '0.86rem' }}>
+                                Room {doctorObj?.RoomNumber || 'N/A'}
+                              </strong>
+                            </div>
+                          </div>
+
+                          {/* Bottom Row: Delete Button */}
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', paddingTop: '4px' }}>
+                            <button
+                              onClick={() => handleOpenDeleteApptModal(appt)}
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.16)',
+                                color: '#ef4444',
+                                border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                                padding: '8px 16px',
+                                borderRadius: '12px',
+                                fontSize: '0.86rem',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '7px',
+                                boxShadow: '0 2px 10px rgba(239, 68, 68, 0.2)',
+                                transition: 'all 0.2s ease'
+                              }}
+                              title="Delete Appointment"
+                            >
+                              <Trash2 size={15} />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.92rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                      {apptSearchQuery ? `No pending appointments found matching "${apptSearchQuery}".` : 'No pending appointments in queue.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 02. INPROGRESS APPOINTMENTS COLUMN - COLOR BLUE */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1.5px solid rgba(2, 132, 199, 0.4)',
+                borderRadius: '22px',
+                padding: '22px',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px'
+              }}>
+                {/* Column Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(2, 132, 199, 0.18)', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Stethoscope size={22} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)' }}>In-Progress Appointments</h4>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>Get_All_Inprogress_Appointments</span>
+                    </div>
+                  </div>
+                  <span style={{
+                    background: 'rgba(2, 132, 199, 0.22)',
+                    color: '#0284c7',
+                    border: '1px solid rgba(2, 132, 199, 0.4)',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.88rem',
+                    fontWeight: '800'
+                  }}>
+                    {filterAppointments(inprogressAppointments).length}
+                  </span>
+                </div>
+
+                {/* List of In-Progress Appointments */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '720px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {isLoadingAppointments ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                      Loading in-progress appointments...
+                    </div>
+                  ) : filterAppointments(inprogressAppointments).length > 0 ? (
+                    filterAppointments(inprogressAppointments).map((appt) => {
+                      const patientObj = getPatientDetails(appt.PatientID);
+                      const doctorObj = getDoctorDetails(appt.DoctorID);
+
+                      return (
+                        <div key={appt._id} style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '18px',
+                          padding: '18px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          {/* Top Badge Row */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#0284c7', background: 'rgba(2, 132, 199, 0.15)', padding: '3px 10px', borderRadius: '8px' }}>
+                              {appt.createdAt ? new Date(appt.createdAt).toLocaleDateString() : 'Today'}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#0284c7', background: 'rgba(2, 132, 199, 0.2)', border: '1px solid rgba(2, 132, 199, 0.35)', padding: '3px 10px', borderRadius: '8px' }}>
+                              In Progress
+                            </span>
+                          </div>
+
+                          {/* Appointment Details */}
+                          <div style={{ background: 'rgba(2, 132, 199, 0.06)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(2, 132, 199, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: '800' }}>
+                                PATIENT REG ID
+                              </span>
+                              <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#0284c7', fontFamily: 'var(--font-heading)' }}>
+                                {patientObj?.PatientRegID || appt.PatientID}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Doctor Name:</span>
+                              <strong style={{ color: 'var(--text-main)' }}>Dr. {doctorObj?.FullName || appt.DoctorID}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Room Number:</span>
+                              <strong style={{ color: '#0284c7', background: 'rgba(2, 132, 199, 0.18)', padding: '2px 10px', borderRadius: '6px', fontSize: '0.86rem' }}>
+                                Room {doctorObj?.RoomNumber || 'N/A'}
+                              </strong>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.92rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                      {apptSearchQuery ? `No in-progress appointments found matching "${apptSearchQuery}".` : 'No in-progress appointments right now.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 03. COMPLETED APPOINTMENTS COLUMN - COLOR GREEN */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1.5px solid rgba(16, 185, 129, 0.35)',
+                borderRadius: '22px',
+                padding: '22px',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px'
+              }}>
+                {/* Column Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(16, 185, 129, 0.18)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <CheckCircle2 size={22} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)' }}>Completed Appointments</h4>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>Get_All_Completed_Appointments</span>
+                    </div>
+                  </div>
+                  <span style={{
+                    background: 'rgba(16, 185, 129, 0.22)',
+                    color: '#10b981',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.88rem',
+                    fontWeight: '800'
+                  }}>
+                    {filterAppointments(completedAppointments).length}
+                  </span>
+                </div>
+
+                {/* List of Completed Appointments */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '720px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {isLoadingAppointments ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                      Loading completed appointments...
+                    </div>
+                  ) : filterAppointments(completedAppointments).length > 0 ? (
+                    filterAppointments(completedAppointments).map((appt) => {
+                      const patientObj = getPatientDetails(appt.PatientID);
+                      const doctorObj = getDoctorDetails(appt.DoctorID);
+
+                      return (
+                        <div key={appt._id} style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '18px',
+                          padding: '18px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          {/* Top Badge Row */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '3px 10px', borderRadius: '8px' }}>
+                              {appt.createdAt ? new Date(appt.createdAt).toLocaleDateString() : 'Today'}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#10b981', background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '3px 10px', borderRadius: '8px' }}>
+                              Completed
+                            </span>
+                          </div>
+
+                          {/* Appointment Details */}
+                          <div style={{ background: 'rgba(16, 185, 129, 0.06)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: '800' }}>
+                                PATIENT REG ID
+                              </span>
+                              <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#10b981', fontFamily: 'var(--font-heading)' }}>
+                                {patientObj?.PatientRegID || appt.PatientID}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Doctor Name:</span>
+                              <strong style={{ color: 'var(--text-main)' }}>Dr. {doctorObj?.FullName || appt.DoctorID}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.94rem' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Room Number:</span>
+                              <strong style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.18)', padding: '2px 10px', borderRadius: '6px', fontSize: '0.86rem' }}>
+                                Room {doctorObj?.RoomNumber || 'N/A'}
+                              </strong>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.92rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                      {apptSearchQuery ? `No completed appointments found matching "${apptSearchQuery}".` : 'No completed appointments recorded.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Billing & Payments Section (Exact same as Accountant Completed Bills) */}
+        {activeTab === 'billing' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, overflowY: 'auto' }}>
+            {/* Top Revenue Summary Banner */}
+            {(() => {
+              const totalRevenue = completedPaymentsList.reduce((acc, pay) => acc + (pay.Full_Payment || 0), 0);
+              return (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(13, 148, 136, 0.12) 100%)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  borderRadius: '22px',
+                  padding: '24px 30px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  boxShadow: 'var(--shadow-card)'
+                }}>
+                  <div>
+                    <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={16} /> Total Completed Revenue
+                    </span>
+                    <h2 style={{ margin: '6px 0 0 0', fontSize: '2.2rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'var(--font-heading)' }}>
+                      Rs. {totalRevenue.toLocaleString()}
+                    </h2>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                      Total Settlement Bills
+                    </span>
+                    <h3 style={{ margin: '4px 0 0 0', fontSize: '1.5rem', fontWeight: '800', color: '#10b981' }}>
+                      {completedPaymentsList.length} Payments Completed
+                    </h3>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Top Search Bar & Refresh Toolbar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Search size={18} style={{ position: 'absolute', left: '16px', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search completed bill by Patient Reg ID or Name..."
+                  value={completedSearchQuery}
+                  onChange={(e) => setCompletedSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '46px',
+                    paddingLeft: '44px',
+                    paddingRight: completedSearchQuery ? '40px' : '16px',
+                    borderRadius: '14px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-main)',
+                    fontSize: '0.92rem',
+                    fontWeight: '600',
+                    outline: 'none'
+                  }}
+                />
+                {completedSearchQuery && (
+                  <button
+                    onClick={() => setCompletedSearchQuery('')}
+                    style={{ position: 'absolute', right: '14px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+
+              <button
+                onClick={fetchCompletedPayments}
+                disabled={isLoadingCompleted}
+                className="dash-search-btn"
+                style={{ padding: '0 20px', height: '46px', fontSize: '0.88rem', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}
+                title="Refresh Completed Payments"
+              >
+                <RefreshCw size={15} className={isLoadingCompleted ? 'spin-icon' : ''} />
+                {isLoadingCompleted ? 'Refreshing...' : 'Refresh List'}
+              </button>
+            </div>
+
+            {completedError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '14px 18px', borderRadius: '14px', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <AlertCircle size={20} />
+                {completedError}
+              </div>
+            )}
+
+            {isLoadingCompleted ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                Loading completed payments data...
+              </div>
+            ) : (() => {
+              const filteredCompleted = completedPaymentsList.filter((pay) => {
+                if (!completedSearchQuery.trim()) return true;
+                const q = completedSearchQuery.toLowerCase().trim();
+                const regId = getPatientRegIDForBill(pay).toLowerCase();
+                const name = getPatientNameForBill(pay).toLowerCase();
+                return regId.includes(q) || name.includes(q);
+              });
+
+              if (filteredCompleted.length === 0) {
+                return (
+                  <div style={{ background: 'var(--bg-card)', padding: '40px', borderRadius: '20px', border: '1px solid var(--border-color)', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <CheckCircle2 size={42} style={{ color: '#10b981', marginBottom: '12px' }} />
+                    <h4 style={{ margin: '0 0 6px 0', fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                      {completedSearchQuery ? 'No Matching Completed Bills Found' : 'No Completed Bills Found'}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.88rem' }}>
+                      {completedSearchQuery ? `No results found for "${completedSearchQuery}".` : 'No completed patient payment records exist.'}
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {filteredCompleted.map((pay) => {
+                    const items = getPaymentItemsForBill(pay);
+                    const patientName = getPatientNameForBill(pay);
+                    const patientRegID = getPatientRegIDForBill(pay);
+
+                    return (
+                      <div
+                        key={pay._id}
+                        style={{
+                          background: 'var(--bg-card)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '20px',
+                          padding: '20px 24px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '16px',
+                          boxShadow: 'var(--shadow-card)'
+                        }}
+                      >
+                        {/* Top Header: Patient & Total */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800' }}>
+                              {getInitials(patientName)}
+                            </div>
+                            <div>
+                              <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                                {patientName}
+                              </h4>
+                              <span style={{ fontSize: '0.82rem', color: 'var(--teal-400)', fontWeight: '700' }}>
+                                Reg ID: {patientRegID}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Settled</span>
+                            <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '900', color: '#10b981' }}>
+                              Rs. {(pay.Full_Payment || 0).toLocaleString()}
+                            </h3>
+                          </div>
+                        </div>
+
+                        {/* Fee Items */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Settled Fee Items
+                          </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                            {items.length === 0 ? (
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No bill items recorded.</span>
+                            ) : (
+                              items.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    background: 'rgba(16, 185, 129, 0.1)',
+                                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                                    borderRadius: '12px',
+                                    padding: '8px 14px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px'
+                                  }}
+                                >
+                                  <span style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                                    {item.name}: <strong>Rs. {item.amount}</strong>
+                                  </span>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#10b981', padding: '2px 8px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)' }}>
+                                    Done ✅
+                                  </span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Footer Status Badge */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
+                          <span style={{
+                            background: 'rgba(16, 185, 129, 0.15)',
+                            color: '#10b981',
+                            border: '1px solid rgba(16, 185, 129, 0.35)',
+                            padding: '6px 16px',
+                            borderRadius: '12px',
+                            fontSize: '0.85rem',
+                            fontWeight: '800',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <CheckCircle2 size={16} /> Payment Completed & Settled
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Settings Section */}
+        {activeTab === 'settings' && (
+          <div className="dash-settings-section" style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {/* Header Toolbar */}
+            <div className="dash-search-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Settings size={22} style={{ color: 'var(--teal-400)' }} />
+                Account Settings & Profile Details
+              </h3>
+
+              <button
+                onClick={fetchMyAdminDetails}
+                disabled={isLoadingMyAdminDetails}
+                className="dash-search-btn"
+                style={{ padding: '8px 18px', fontSize: '0.88rem', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                title="Refresh Profile Details"
+              >
+                <RefreshCw size={15} className={isLoadingMyAdminDetails ? 'spin-icon' : ''} />
+                {isLoadingMyAdminDetails ? 'Refreshing...' : 'Refresh Details'}
+              </button>
+            </div>
+
+            {myAdminDetailsError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '14px 18px', borderRadius: '14px', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <AlertCircle size={20} />
+                {myAdminDetailsError}
+              </div>
+            )}
+
+            {/* Profile Overview Card */}
+            <div style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '22px',
+              padding: '28px',
+              boxShadow: 'var(--shadow-card)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px'
+            }}>
+              {/* Profile Top Summary Banner */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                <div style={{
+                  width: '72px',
+                  height: '72px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                  color: '#ffffff',
+                  fontSize: '1.8rem',
+                  fontWeight: '800',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 6px 20px rgba(13, 148, 136, 0.4)'
+                }}>
+                  {getInitials(myAdminDetails?.FullName || user?.FullName || 'Administrator')}
+                </div>
+                <div>
+                  <h3 style={{ margin: '0 0 6px 0', fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myAdminDetails?.FullName || user?.FullName || 'Administrator'}
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.88rem', color: 'var(--teal-400)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Mail size={15} />
+                      {myAdminDetails?.Email || user?.Email || 'admin@apexhealth.org'}
+                    </span>
+                    <span style={{
+                      background: 'rgba(45, 212, 191, 0.15)',
+                      color: '#2dd4bf',
+                      border: '1px solid rgba(45, 212, 191, 0.35)',
+                      padding: '3px 12px',
+                      borderRadius: '16px',
+                      fontSize: '0.8rem',
+                      fontWeight: '800'
+                    }}>
+                      Role: {myAdminDetails?.Role || 'Admin'}
+                    </span>
+                    <span style={{
+                      background: myAdminDetails?.Approve ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                      color: myAdminDetails?.Approve ? '#10b981' : '#f59e0b',
+                      border: myAdminDetails?.Approve ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)',
+                      padding: '3px 12px',
+                      borderRadius: '16px',
+                      fontSize: '0.8rem',
+                      fontWeight: '800'
+                    }}>
+                      Status: {myAdminDetails?.Approve ? 'Approved ✅' : 'Pending Approval ⏳'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Details Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '20px'
+              }}>
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myAdminDetails?.FullName || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Address</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myAdminDetails?.Email || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone Number</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--teal-400)' }}>
+                    {myAdminDetails?.PhoneNumber || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>NIC Number</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myAdminDetails?.NICNumber || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Admin ID</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myAdminDetails?.AdminID || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gender</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myAdminDetails?.Gender || 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date of Birth</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myAdminDetails?.DateOfBirth ? myAdminDetails.DateOfBirth.split('T')[0] : 'N/A'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Department</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myAdminDetails?.Department || 'Administration'}
+                  </h4>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hospital Branch</span>
+                  <h4 style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {myAdminDetails?.HospitalBranch || 'Main Branch'}
+                  </h4>
+                </div>
+              </div>
+
+              {/* 3 Buttons Down */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                paddingTop: '20px',
+                borderTop: '1px solid var(--border-color)',
+                flexWrap: 'wrap'
+              }}>
+                {/* 01. First Button: Update Phone Number */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewMyAdminPhone(myAdminDetails?.PhoneNumber || '');
+                    setMyAdminPhoneError('');
+                    setMyAdminPhoneSuccess('');
+                    setShowMyAdminPhoneModal(true);
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    fontSize: '0.92rem',
+                    cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    boxShadow: '0 4px 14px rgba(13, 148, 136, 0.35)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Phone size={18} />
+                  Update Phone Number
+                </button>
+
+                {/* 02. Second Button: Update Password */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMyAdminOldPassword('');
+                    setMyAdminNewPassword('');
+                    setMyAdminConfirmPassword('');
+                    setShowMyAdminOldPassword(false);
+                    setShowMyAdminNewPassword(false);
+                    setShowMyAdminConfirmPassword(false);
+                    setMyAdminPasswordError('');
+                    setMyAdminPasswordSuccess('');
+                    setShowMyAdminPasswordModal(true);
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    fontSize: '0.92rem',
+                    cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    boxShadow: '0 4px 14px rgba(13, 148, 136, 0.35)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Key size={18} />
+                  Update Password
+                </button>
+
+                {/* 03. Third Button: Delete Account */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteAdminAccountPassword('');
+                    setDeleteAdminAccountError('');
+                    setShowDeleteAdminAccountModal(true);
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    fontSize: '0.92rem',
+                    cursor: 'pointer',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    color: '#ef4444',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    marginLeft: 'auto',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Trash2 size={18} />
+                  Delete Account
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: MEDICINE STOCK */}
+        {activeTab === 'medicine_stock' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, overflowY: 'auto' }}>
+            <div className="dash-search-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Boxes size={22} style={{ color: 'var(--teal-400)' }} />
+                Medicine Stock Levels Overview
+              </h3>
+
+              <button
+                onClick={fetchMedicines}
+                disabled={isLoadingMedicines}
+                className="dash-search-btn"
+                style={{ padding: '8px 18px', fontSize: '0.88rem', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                title="Refresh Stock Data"
+              >
+                <RefreshCw size={15} className={isLoadingMedicines ? 'spin-icon' : ''} />
+                {isLoadingMedicines ? 'Refreshing...' : 'Refresh Stock Data'}
+              </button>
+            </div>
+
+            {/* Stock Summary Header Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '16px', padding: '18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800' }}>
+                  <AlertCircle size={22} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: '#ef4444', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Low Stock (&lt; 50)</span>
+                  <h3 style={{ margin: '2px 0 0 0', fontSize: '1.5rem', fontWeight: '800', color: '#ef4444' }}>
+                    {medicines.filter(m => Number(m.Quantity) < 50).length} Items
+                  </h3>
+                </div>
+              </div>
+
+              <div style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '16px', padding: '18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800' }}>
+                  <Boxes size={22} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: '#f59e0b', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Medium Stock (50 - 99)</span>
+                  <h3 style={{ margin: '2px 0 0 0', fontSize: '1.5rem', fontWeight: '800', color: '#f59e0b' }}>
+                    {medicines.filter(m => Number(m.Quantity) >= 50 && Number(m.Quantity) < 100).length} Items
+                  </h3>
+                </div>
+              </div>
+
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '16px', padding: '18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800' }}>
+                  <CheckCircle2 size={22} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Good Stock (100+)</span>
+                  <h3 style={{ margin: '2px 0 0 0', fontSize: '1.5rem', fontWeight: '800', color: '#10b981' }}>
+                    {medicines.filter(m => Number(m.Quantity) >= 100).length} Items
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            {/* 3 Columns for Low, Medium, Good Stock */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '22px' }}>
+              
+              {/* 1. Low Stock Column (Red) */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '20px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(239, 68, 68, 0.2)', paddingBottom: '12px' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AlertCircle size={18} />
+                    Low Stock (Red)
+                  </h4>
+                  <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '3px 12px', borderRadius: '14px', fontSize: '0.8rem', fontWeight: '800' }}>
+                    Qty &lt; 50
+                  </span>
+                </div>
+
+                {medicines.filter(m => Number(m.Quantity) < 50).length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                    No medicines in Low Stock range.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {medicines.filter(m => Number(m.Quantity) < 50).map(med => (
+                      <div key={med._id} style={{ background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '14px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <Pill size={18} style={{ color: '#ef4444' }} />
+                          <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>{med.TabletName}</strong>
+                        </div>
+                        <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', fontWeight: '800', padding: '4px 12px', borderRadius: '10px', fontSize: '0.88rem' }}>
+                          Qty: {med.Quantity}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Medium Stock Column (Orange/Yellow) */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '20px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(245, 158, 11, 0.2)', paddingBottom: '12px' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Boxes size={18} />
+                    Medium Stock (Medium)
+                  </h4>
+                  <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '3px 12px', borderRadius: '14px', fontSize: '0.8rem', fontWeight: '800' }}>
+                    50 ≤ Qty &lt; 100
+                  </span>
+                </div>
+
+                {medicines.filter(m => Number(m.Quantity) >= 50 && Number(m.Quantity) < 100).length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                    No medicines in Medium Stock range.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {medicines.filter(m => Number(m.Quantity) >= 50 && Number(m.Quantity) < 100).map(med => (
+                      <div key={med._id} style={{ background: 'rgba(245, 158, 11, 0.06)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '14px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <Pill size={18} style={{ color: '#f59e0b' }} />
+                          <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>{med.TabletName}</strong>
+                        </div>
+                        <span style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', fontWeight: '800', padding: '4px 12px', borderRadius: '10px', fontSize: '0.88rem' }}>
+                          Qty: {med.Quantity}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Good Stock Column (Green) */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '20px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', paddingBottom: '12px' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CheckCircle2 size={18} />
+                    Good Stock (Green)
+                  </h4>
+                  <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '3px 12px', borderRadius: '14px', fontSize: '0.8rem', fontWeight: '800' }}>
+                    Qty ≥ 100
+                  </span>
+                </div>
+
+                {medicines.filter(m => Number(m.Quantity) >= 100).length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                    No medicines in Good Stock range.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {medicines.filter(m => Number(m.Quantity) >= 100).map(med => (
+                      <div key={med._id} style={{ background: 'rgba(16, 185, 129, 0.06)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '14px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <Pill size={18} style={{ color: '#10b981' }} />
+                          <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>{med.TabletName}</strong>
+                        </div>
+                        <span style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', fontWeight: '800', padding: '4px 12px', borderRadius: '10px', fontSize: '0.88rem' }}>
+                          Qty: {med.Quantity}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Edit Contact Number Modal */}
@@ -4095,8 +5983,8 @@ export default function AdminDashboard({ user, onLogout, theme, onToggleTheme })
                   {Array.isArray(selectedLabStaffModal.Qualifications) && selectedLabStaffModal.Qualifications.length > 0
                     ? selectedLabStaffModal.Qualifications.map(q => typeof q === 'object' ? q.Qualification : q).filter(Boolean).join(', ')
                     : typeof selectedLabStaffModal.Qualifications === 'string'
-                    ? selectedLabStaffModal.Qualifications
-                    : 'N/A'}
+                      ? selectedLabStaffModal.Qualifications
+                      : 'N/A'}
                 </strong>
               </div>
 
@@ -4195,6 +6083,379 @@ export default function AdminDashboard({ user, onLogout, theme, onToggleTheme })
                 {isDeletingLabStaff ? 'Deleting...' : 'Yes, Delete Lab Staff'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Appointment Confirmation Popup Window */}
+      {showDeleteApptModal && apptToDelete && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '460px', textAlign: 'center', padding: '36px', borderRadius: '20px' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.18)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+              <AlertCircle size={32} />
+            </div>
+
+            <h3 style={{ margin: '0 0 24px 0', fontSize: '1.35rem', color: 'var(--text-main)', fontWeight: '800' }}>
+              Are you sure you want to delete this appointment?
+            </h3>
+
+            <div style={{ display: 'flex', gap: '14px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="back-btn"
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', fontSize: '0.95rem', justifyContent: 'center' }}
+                onClick={() => {
+                  setShowDeleteApptModal(false);
+                  setApptToDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isDeletingAppt}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  fontWeight: '800',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onClick={handleConfirmDeleteAppt}
+              >
+                {isDeletingAppt ? 'Deleting...' : 'OK'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 01. UPDATE PHONE NUMBER MODAL */}
+      {showMyAdminPhoneModal && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '440px', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Phone size={20} style={{ color: 'var(--teal-400)' }} />
+                Update Phone Number
+              </h3>
+              <button className="icon-btn" onClick={() => setShowMyAdminPhoneModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {myAdminPhoneError && (
+              <div className="error-banner" style={{ marginBottom: '16px', fontSize: '0.88rem' }}>
+                <AlertCircle size={16} />
+                {myAdminPhoneError}
+              </div>
+            )}
+
+            {myAdminPhoneSuccess && (
+              <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '10px 14px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={16} />
+                {myAdminPhoneSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateMyAdminPhoneSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  New Phone Number (10 Digits)
+                </label>
+                <div className="dash-search-input-wrapper" style={{ height: '46px' }}>
+                  <Phone size={18} className="dash-search-icon" />
+                  <input
+                    type="text"
+                    maxLength={10}
+                    placeholder="e.g. 0771234567"
+                    value={newMyAdminPhone}
+                    onChange={(e) => setNewMyAdminPhone(e.target.value.replace(/\D/g, ''))}
+                    className="dash-search-input"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button type="button" className="back-btn" onClick={() => setShowMyAdminPhoneModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="dash-search-btn" disabled={isUpdatingMyAdminPhone}>
+                  {isUpdatingMyAdminPhone ? 'Updating...' : 'Save Phone Number'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 02. UPDATE PASSWORD MODAL */}
+      {showMyAdminPasswordModal && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '460px', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Key size={20} style={{ color: 'var(--teal-400)' }} />
+                Update Password
+              </h3>
+              <button className="icon-btn" onClick={() => setShowMyAdminPasswordModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {myAdminPasswordError && (
+              <div className="error-banner" style={{ marginBottom: '16px', fontSize: '0.88rem' }}>
+                <AlertCircle size={16} />
+                {myAdminPasswordError}
+              </div>
+            )}
+
+            {myAdminPasswordSuccess && (
+              <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '10px 14px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={16} />
+                {myAdminPasswordSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateMyAdminPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  Old Password
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showMyAdminOldPassword ? 'text' : 'password'}
+                    placeholder="Enter current password"
+                    value={myAdminOldPassword}
+                    onChange={(e) => setMyAdminOldPassword(e.target.value)}
+                    style={{
+                      background: 'var(--bg-input)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '12px 44px 12px 16px',
+                      color: 'var(--text-main)',
+                      fontSize: '0.92rem',
+                      width: '100%'
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMyAdminOldPassword(!showMyAdminOldPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                    title={showMyAdminOldPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showMyAdminOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  New Password (Min 6 Characters)
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showMyAdminNewPassword ? 'text' : 'password'}
+                    placeholder="Enter new password"
+                    value={myAdminNewPassword}
+                    onChange={(e) => setMyAdminNewPassword(e.target.value)}
+                    style={{
+                      background: 'var(--bg-input)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '12px 44px 12px 16px',
+                      color: 'var(--text-main)',
+                      fontSize: '0.92rem',
+                      width: '100%'
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMyAdminNewPassword(!showMyAdminNewPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                    title={showMyAdminNewPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showMyAdminNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  Confirm New Password
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showMyAdminConfirmPassword ? 'text' : 'password'}
+                    placeholder="Re-enter new password"
+                    value={myAdminConfirmPassword}
+                    onChange={(e) => setMyAdminConfirmPassword(e.target.value)}
+                    style={{
+                      background: 'var(--bg-input)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '12px 44px 12px 16px',
+                      color: 'var(--text-main)',
+                      fontSize: '0.92rem',
+                      width: '100%'
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMyAdminConfirmPassword(!showMyAdminConfirmPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                    title={showMyAdminConfirmPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showMyAdminConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button type="button" className="back-btn" onClick={() => setShowMyAdminPasswordModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="dash-search-btn" disabled={isUpdatingMyAdminPassword}>
+                  {isUpdatingMyAdminPassword ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 03. DELETE ACCOUNT MODAL */}
+      {showDeleteAdminAccountModal && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '440px', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Trash2 size={20} />
+                Delete Account Confirmation
+              </h3>
+              <button className="icon-btn" onClick={() => setShowDeleteAdminAccountModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '12px 16px', borderRadius: '12px', marginBottom: '18px', fontSize: '0.88rem' }}>
+              <strong>Warning:</strong> Deleting your account will permanently remove your administrator credentials from the system.
+            </div>
+
+            {deleteAdminAccountError && (
+              <div className="error-banner" style={{ marginBottom: '16px', fontSize: '0.88rem' }}>
+                <AlertCircle size={16} />
+                {deleteAdminAccountError}
+              </div>
+            )}
+
+            <form onSubmit={handleDeleteMyAdminAccountSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  Enter Password to Confirm Deletion
+                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showDeleteAdminPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    value={deleteAdminAccountPassword}
+                    onChange={(e) => setDeleteAdminAccountPassword(e.target.value)}
+                    style={{
+                      background: 'var(--bg-input)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '12px 44px 12px 16px',
+                      color: 'var(--text-main)',
+                      fontSize: '0.92rem',
+                      width: '100%'
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteAdminPassword(!showDeleteAdminPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                    title={showDeleteAdminPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showDeleteAdminPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button type="button" className="back-btn" onClick={() => setShowDeleteAdminAccountModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    fontSize: '0.9rem',
+                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                  disabled={isDeletingAdminAccount}
+                >
+                  {isDeletingAdminAccount ? 'Deleting Account...' : 'Confirm Account Deletion'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
